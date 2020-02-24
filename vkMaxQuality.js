@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Vk Max Video Quality
 // @namespace    http://tampermonkey.net/
-// @version      0.4
+// @version      0.5
 // @description  try to take over the world!
 // @author       You
 // @include      http*://*vk.com/*
@@ -39,7 +39,7 @@ function SetVKMaxQuality() {
 }
 (function () {
     'use strict';
-    window.onload = function () {
+    window.onload = async function () {
         var currentQuality = 0;
         while(true){
             currentQuality = SetVKMaxQuality();
