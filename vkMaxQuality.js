@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Vk Max Video Quality
 // @namespace    http://tampermonkey.net/
-// @version      0.3
+// @version      0.4
 // @description  try to take over the world!
 // @author       You
 // @include      http*://*vk.com/*
@@ -11,12 +11,12 @@
 function SetVKMaxQuality() {
     var settingsBtn = document.getElementsByClassName("videoplayer_btn_settings")[0];
     if (settingsBtn == undefined) {
-        return;
+        return 0;
     }
     settingsBtn.click();
     var qualityBtn = document.getElementsByClassName("videoplayer_settings_menu_list_item_quality")[0];
     if (qualityBtn == undefined) {
-        return;
+        return 0;
     }
     qualityBtn.click();
     var qualityDivs = document.getElementsByClassName("videoplayer_settings_menu_sublist_item");
@@ -32,15 +32,22 @@ function SetVKMaxQuality() {
         }
     }
     if (MaxQualityDiv == undefined) {
-        return;
+        return 0;
     }
     MaxQualityDiv.click();
+    return MaxQuality;
 }
-
 (function () {
     'use strict';
     window.onload = function () {
-        SetVKMaxQuality();
+        var currentQuality = 0;
+        while(true){
+            currentQuality = SetVKMaxQuality();
+            if(currentQuality < 1080){
+                await new Promise(r => setTimeout(r, 5000));   
+            }
+        }
+        
     };
 
 
