@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Vk Max Video Quality
 // @namespace    http://tampermonkey.net/
-// @version      0.5
+// @version      0.6
 // @description  try to take over the world!
 // @author       You
 // @include      http*://*vk.com/*
@@ -45,6 +45,8 @@ function SetVKMaxQuality() {
             currentQuality = SetVKMaxQuality();
             if(currentQuality < 1080){
                 await new Promise(r => setTimeout(r, 5000));   
+            }else{
+                break;
             }
         }
         
