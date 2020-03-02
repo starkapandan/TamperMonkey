@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Vk Max Video Quality
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.1
 // @description  try to take over the world!
 // @author       You
 // @include      http*://*vk.com/*
@@ -41,6 +41,7 @@ function SetVKMaxQuality() {
 }
 
 async function ListenToDocumentChanges() {
+    await new Promise(r => setTimeout(r, 1500));
     while (true) {
         console.log("<Iteration>")
         if (lastDocument != document.location) {
@@ -58,7 +59,5 @@ async function ListenToDocumentChanges() {
 
 (function () {
     'use strict';
-    window.onload = function () {
-        ListenToDocumentChanges();
-    };
+    ListenToDocumentChanges();
 })();
