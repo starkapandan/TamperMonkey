@@ -58,8 +58,9 @@ async function ListenToDocumentChanges() {
 
 (function () {
     'use strict';
-    if (window.top != window.self)
+    if (window.top != window.self){
         return;
+    }
     window.onload = function () {
         ListenToDocumentChanges();
     };
