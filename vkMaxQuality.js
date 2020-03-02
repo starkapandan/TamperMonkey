@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Vk Max Video Quality
 // @namespace    http://tampermonkey.net/
-// @version      0.8
+// @version      0.9
 // @description  try to take over the world!
 // @author       You
 // @include      http*://*vk.com/*
@@ -54,6 +54,6 @@ async function ListenToDocumentChanges() {
 (function () {
     'use strict';
     window.onload = function () {
-        this.ListenToDocumentChanges();
+        ListenToDocumentChanges();
     };
 })();
