@@ -11,7 +11,7 @@
 var lastDocument = "";
 var lastQuality = 0;
 
-function SetVKMaxQuality() {
+function SetMaxQuality() {
     var settingsBtn = document.getElementsByClassName("videoplayer_btn_settings")[0];
     if (settingsBtn == undefined) {
         return 0;
@@ -45,7 +45,7 @@ async function ListenToDocumentChanges() {
     while (true) {
         if (lastDocument != document.location.href) {
             lastDocument = document.location.href;
-            var status = SetVKMaxQuality();
+            var status = SetMaxQuality();
             if (status == 1) {
                 if(lastQuality == 1080){
                     break;
