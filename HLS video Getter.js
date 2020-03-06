@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         HLS video Getter
 // @namespace    http://tampermonkey.net/
-// @version      0.2
+// @version      0.3
 // @description  try to take over the world!
 // @author       You
 // @include        http*://*kanald.com.tr/*
@@ -13,6 +13,8 @@
 var AutoTraverseNextLink = false;
 var safetyCounter = 0;
 var LinkSearchPattern = ["kanald.com.tr<!>1000/prog_index.m3u8", "vk.com<!>.m3u8"];
+var list = [];
+
 
 function getFullUrl(url) {
     return url.replace("&part=1-6", "");
@@ -126,7 +128,6 @@ async function SeekLinks(list) {
 (function () {
     'use strict';
     console.log("TESTLOG>Inject done!");
-    var list = [];
     addXMLRequestCallback(function (xhr) {
         list.push(xhr);
     });
