@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         HLS video Getter
+// @name         Viafree anti adblocker
 // @namespace    http://tampermonkey.net/
 // @version      0.1
 // @description  try to take over the world!
@@ -32,4 +32,12 @@ function findByKey(obj, key) {
 
 }
 
-findByKey(window.__initialState__, "adBlockerBlocker")['adBlockerBlocker']['enabled'] = false;
+(function () {
+    'use strict';
+    if (window.top != window.self){
+        return;
+    }
+    window.onload = function () {
+        findByKey(window.__initialState__, "adBlockerBlocker")['adBlockerBlocker']['enabled'] = false;
+    };
+})();
