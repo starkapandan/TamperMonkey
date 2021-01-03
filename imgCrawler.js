@@ -51,16 +51,15 @@
                         if (actual_img_height < min_size_dest_h || actual_img_width < min_size_dest_w) {
                             return;
                         }
+                        this.width = "300";
+                        this.height = "300";
                         console.log(this.src);
                         //console.log(">>" + actual_img_width.toString() + "X" + actual_img_height.toString());
-                        var name = location.host + " - " + (Math.floor(Math.random() * 100000) + 1).toString();
                         console.log(this);
-                        // var arg = {
-                        //     url: img.src,
-                        //     name: name + ".jpg"
-                        // };
-                        // GM_download(arg);
+                        var name = location.host + " - " + (Math.floor(Math.random() * 100000) + 1).toString();
+                        document.body.insertBefore(this, document.body.firstChild);
                     };
+
                 }, globalIndex * 0, globalIndex);
             }
         }
@@ -72,6 +71,7 @@
         console.log("min_size_tag(width, height) - min w and h for img tag on page");
         console.log("min_size_dest(width, height) - min w and h for real img at dest src=\"dest link...\"");
         console.log("run() - download images");
+        run();
     };
 })();
 
