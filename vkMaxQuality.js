@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         imgCrawler
+// @name         Vk Max Video Quality
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      2.1
 // @description  try to take over the world!
 // @author       You
 // @include      http*://*vk.com/*
