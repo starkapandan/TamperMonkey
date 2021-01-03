@@ -54,7 +54,7 @@ async function ListenToDocumentChanges() {
         }
         await new Promise(r => setTimeout(r, 5000));
     }
-}
+} 
 
 (function () {
     'use strict';
