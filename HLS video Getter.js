@@ -11,8 +11,8 @@
 // ==/UserScript==
 
 
-var LinkSearchPattern = ["kanald.com.tr<!>1000/prog_index.m3u8", "vk.com<!>.m3u8", "ip-only.net<!>playlist.m3u8"];
-var list = [];
+var LinkSearchPattern = ["kanald.com.tr<!>1000/prog_index.m3u8", "vk.com<!>.m3u8", "discoveryplus.se<!>playlist.m3u8"];
+savedLinks = [];
 
 function addXMLRequestCallback(callback) {
     var oldSend, i;
@@ -67,33 +67,26 @@ function seekPattern(link) {
     return false;
 }
 
-async function SeekLinks(list) {
-    await new Promise(r => setTimeout(r, 500));
-    var found = false;
-    for (var i = 0; i < list.length; i++) {
-        if (seekPattern(list[i].responseURL) == true) {
-            var Url = getFullUrl(list[i].responseURL);
-            console.log("LINKLOG>" + Url);
-            if (AutoTraverseNextLink == true) {
-                var nextUrl = await findNextLink(window.location.href);
-                if (nextUrl == "404") {
-                    return;
-                }
-                window.location.href = nextUrl;
-            }
-            found = true;
-        }
-    }
-    if (found == false) {
-        SeekLinks(list);
-    }
+
+function CheckLinkForMatch(link){
+    //console.log(link)
+    if (seekPattern(link) == true && savedLinks.includes(link) == false) {
+        console.log("LINKLOG>" + link);
+        savedLinks.push(link);
+    } 
 }
 
 (function () {
     'use strict';
-    console.log("TESTLOG>Inject done!");
+    console.log("HLS VIDEO GETTER -> INJECT DONE\n" +
+                "Functions: list()\n"+ 
+                "Variables: savedLinks\n");
+    window.list = function(){
+        console.log(savedLinks.join("\n"));
+    }
     addXMLRequestCallback(function (xhr) {
-        list.push(xhr);
+        xhr.onload = function(){
+            CheckLinkForMatch(xhr.responseURL);
+        }
     });
-    SeekLinks(list);
 })();
