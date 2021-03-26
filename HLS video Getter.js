@@ -6,11 +6,11 @@
 // @author       You
 // @include        http*://*kanald.com.tr/*
 // @include        http*://*vk.com/*
+// @include        http*://*discoveryplus.se/*
 // @grant        none
 // ==/UserScript==
 
 
-var safetyCounter = 0;
 var LinkSearchPattern = ["kanald.com.tr<!>1000/prog_index.m3u8", "vk.com<!>.m3u8", "ip-only.net<!>playlist.m3u8"];
 var list = [];
 
