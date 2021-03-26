@@ -11,6 +11,7 @@
 var lastDocument = "";
 var lastQuality = 0;
 
+
 function SetMaxQuality() {
     var settingsBtn = document.getElementsByClassName("videoplayer_btn_settings")[0];
     if (settingsBtn == undefined) {

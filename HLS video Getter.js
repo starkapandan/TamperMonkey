@@ -10,20 +10,14 @@
 // ==/UserScript==
 
 
-var AutoTraverseNextLink = false;
 var safetyCounter = 0;
-var LinkSearchPattern = ["kanald.com.tr<!>1000/prog_index.m3u8", "vk.com<!>.m3u8"];
+var LinkSearchPattern = ["kanald.com.tr<!>1000/prog_index.m3u8", "vk.com<!>.m3u8", "ip-only.net<!>playlist.m3u8"];
 var list = [];
-
-
-function getFullUrl(url) {
-    return url.replace("&part=1-6", "");
-}
 
 function addXMLRequestCallback(callback) {
     var oldSend, i;
     if (XMLHttpRequest.callbacks) {
-        var x = $("something")
+        var x = $("something appearance")
         // we've already overridden send() so just add the callback
         XMLHttpRequest.callbacks.push(callback);
     } else {
@@ -49,20 +43,6 @@ function addXMLRequestCallback(callback) {
 }
 
 
-//MODEL// https://www.kanald.com.tr/asi/34-bolum/3558
-function splitTwoPartLink(BaseUri, SkipPartOneChange = false) {
-    var splittedurl = BaseUri.split("/");
-    var Part = parseInt(splittedurl[4].replace("-bolum", ""));
-    var tmp = Part + 1;
-    if (SkipPartOneChange == false) {
-        splittedurl[4] = (tmp).toString() + "-bolum";
-    }
-    var tmp2 = parseInt(splittedurl[5]) + 1;
-    splittedurl[5] = tmp2.toString();
-    var nextUrl = splittedurl.join("/");
-    return nextUrl;
-}
-
 function is404(link) {
     var http = new XMLHttpRequest();
     http.open('HEAD', link, false);
@@ -74,22 +54,6 @@ function is404(link) {
     }
 }
 
-async function findNextLink(BaseUri, SkipPartOneChange = false, log = false) {
-    var nextUrl = splitTwoPartLink(BaseUri, SkipPartOneChange);
-    if (log == true) {
-        console.log("TESTLOG>>" + BaseUri)
-    }
-    if (is404(nextUrl)) {
-        if (safetyCounter > 300) {
-            return "404"
-        } else {
-            await new Promise(r => setTimeout(r, 80));
-        }
-        safetyCounter++;
-        nextUrl = await findNextLink(nextUrl, SkipPartOneChange = true, log = true);
-    }
-    return nextUrl;
-}
 
 function seekPattern(link) {
     for (var i = 0; i < LinkSearchPattern.length; i++) {
