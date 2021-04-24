@@ -25,7 +25,7 @@ var LinkSearchPattern = [
         "request": ".*expires=.*id=.*&",
     },
 ];
-savedLinks = [];
+window.savedLinks = [];
 
 function addXMLRequestCallback(callback) {
     var oldSend, i;
@@ -85,17 +85,17 @@ function seekPattern(link) {
 
 function CheckLinkForMatch(link){
     //console.log(link)
-    linkState = seekPattern(link);
+    var linkState = seekPattern(link);
     if (linkState != false && savedLinks.includes(linkState) == false) {
         console.log("LINKLOG>" + link);
         savedLinks.push(link);
-    } 
+    }
 }
 
 (function () {
     'use strict';
     console.log("HLS VIDEO GETTER -> INJECT DONE\n" +
-                "Functions: list()\n"+ 
+                "Functions: list()\n"+
                 "Variables: savedLinks\n");
     window.list = function(){
         console.log(savedLinks.join("\n"));
