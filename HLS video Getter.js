@@ -11,7 +11,20 @@
 // ==/UserScript==
 
 
-var LinkSearchPattern = ["kanald.com.tr<!>1000/prog_index.m3u8", "vk.com<!>.m3u8", "discoveryplus.se<!>playlist.m3u8"];
+//host, just check if matches current website
+//request, check if matches AND returned the matched link!
+var LinkSearchPattern = [
+    {
+        "host": "kanald.com.tr",
+        "request": ".*1000/prog_index.m3u8.*",
+    },{
+        "host": "discoveryplus.se",
+        "request": ".*playlist.m3u8.*",
+    },{
+        "host": "mycdn.me",
+        "request": ".*expires=.*id=.*&",
+    },
+];
 savedLinks = [];
 
 function addXMLRequestCallback(callback) {
@@ -57,10 +70,12 @@ function is404(link) {
 
 function seekPattern(link) {
     for (var i = 0; i < LinkSearchPattern.length; i++) {
-        var pattern = LinkSearchPattern[i].split("<!>");
-        if (window.location.href.includes(pattern[0]) == true) {
-            if (link.includes(pattern[1]) == true) {
-                return true;
+        var hostPattern = LinkSearchPattern[i].host;
+        if (window.location.href.match(hostPattern) != undefined) {
+            var requestPattern = LinkSearchPattern[i].request;
+            var matches = link.match(requestPattern);
+            if (matches != undefined) {
+                return matches[0];
             }
         }
     }
@@ -70,7 +85,8 @@ function seekPattern(link) {
 
 function CheckLinkForMatch(link){
     //console.log(link)
-    if (seekPattern(link) == true && savedLinks.includes(link) == false) {
+    linkState = seekPattern(link);
+    if (linkState != false && savedLinks.includes(linkState) == false) {
         console.log("LINKLOG>" + link);
         savedLinks.push(link);
     } 
