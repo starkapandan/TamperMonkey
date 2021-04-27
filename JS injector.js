@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JS injector
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      0.2
 // @description  try to take over the world!
 // @author       You
 // @run-at      document-start
@@ -92,6 +92,21 @@ async function GetHTMLFromUrl(url) {
 	return rawHTML;
 }
 
+function ProcessReplacementList(scriptData, replacementsList){
+	for (const replacementPackage of replacementsList) {
+		log.debug("Using replacementPackage -> ", replacementPackage)
+		var matchedData = scriptData.match(replacementPackage.find);
+		if (matchedData == undefined) {
+			log.debug("No matches to apply from replacementpackage");
+			continue;
+		}
+		log.write("Found matches to replace...", matchedData);
+		var modifiedScript = scriptData.replace(replacementPackage.find, replacementPackage.replaceWith);
+		eval(modifiedScript);
+		log.debug("Modified script code -> ", modifiedScript);
+	};
+}
+
 function init() {
 	new MutationObserver((mutations, observer) => {
 		// Find whether the script tag you want to tamper with exists
@@ -127,19 +142,7 @@ function init() {
 						log.debug("target script element found -> ", currentTamperTarget);
 						GetHTMLFromUrl(currentScriptSrc).then(scriptData => {
 							log.debug("External script fetched...", scriptData);
-							for (const replacementPackage of scriptPackage.replacements) {
-								log.debug("Using replacementPackage -> ", replacementPackage)
-								var matchedData = scriptData.match(replacementPackage.find);
-								if (matchedData == undefined) {
-									log.debug("No matches to apply from replacementpackage");
-									continue;
-								}
-								log.debug("Found matches...", matchedData);
-								var modifiedScript = scriptData.replace(replacementPackage.find, replacementPackage.replaceWith);
-								eval(modifiedScript);
-								log.debug("Modified script code -> ", modifiedScript);
-								log.debug("Modified Script element -> ", currentTamperTarget);
-							};
+							ProcessReplacementList(scriptData, scriptPackage.replacements);
 						})
 					} else {
 						log.debug("No source name pattern matches found for this script element")
@@ -161,19 +164,7 @@ function init() {
 						var scriptData = currentTamperTarget.text;
 						currentTamperTarget.text = "";
 
-						for (const replacementPackage of scriptPackage.replacements) {
-							log.debug("Using replacementPackage -> ", replacementPackage)
-							var matchedData = scriptData.match(replacementPackage.find);
-							if (matchedData == undefined) {
-								log.debug("No matches to apply from replacementpackage");
-								continue;
-							}
-							log.debug("Found matches...", matchedData);
-							var modifiedScript = scriptData.replace(replacementPackage.find, replacementPackage.replaceWith);
-							eval(modifiedScript);
-							log.debug("Modified script code -> ", modifiedScript);
-							log.debug("Modified Script element -> ", currentTamperTarget);
-						};
+						ProcessReplacementList(scriptData, scriptPackage.replacements);
 					} else {
 						log.debug("No source name pattern matches found for this script element")
 					}
