@@ -4,9 +4,9 @@
 // @version      0.7
 // @description  try to take over the world!
 // @author       You
-// @include        http*://*kanald.com.tr/*
-// @include        http*://*vk.com/*
-// @include        http*://*discoveryplus.se/*
+// @match        http*://*kanald.com.tr/*
+// @match        http*://*vk.com/*
+// @match        http*://*discoveryplus.se/*
 // @grant        none
 // ==/UserScript==
 
