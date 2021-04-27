@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JS injector
 // @namespace    http://tampermonkey.net/
-// @version      0.2
+// @version      0.3
 // @description  try to take over the world!
 // @author       You
 // @run-at      document-start
@@ -92,7 +92,7 @@ async function GetHTMLFromUrl(url) {
 	return rawHTML;
 }
 
-function ProcessReplacementList(scriptData, replacementsList){
+function ProcessReplacementList(scriptData, replacementsList) {
 	for (const replacementPackage of replacementsList) {
 		log.debug("Using replacementPackage -> ", replacementPackage)
 		var matchedData = scriptData.match(replacementPackage.find);
@@ -125,12 +125,12 @@ function init() {
 			log.debug("New script element appeared -> ", tamperTarget[i].src);
 			log.debug("hostscripts packages to be used -> ", currentHostScripts);
 			//check if script is external src
-			if (tamperTarget[i].src) { //src script
-				log.debug("checking extern source pattern...");
-				for (const scriptPackage of currentHostScripts) {
+			for (const scriptPackage of currentHostScripts) {
+				if (tamperTarget[i].src) { //src script
+					log.debug("checking extern source pattern...");
 					let currentTamperTarget = tamperTarget[i];
 					if (scriptPackage.srcNamePattern == undefined) {
-						log.debug("no srcNamePattern regex pattern skipping...");
+						log.debug("no srcNamePattern regex, skipping...");
 						continue
 					}
 
@@ -147,11 +147,8 @@ function init() {
 					} else {
 						log.debug("No source name pattern matches found for this script element")
 					}
-				};
-			}
-			else { //inline script
-				log.debug("checking inline pattern...");
-				for (const scriptPackage of currentHostScripts) {
+				} else { //inline script
+					log.debug("checking inline pattern...");
 					let currentTamperTarget = tamperTarget[i];
 					if (scriptPackage.inlinePattern == undefined) {
 						log.debug("no inline regex pattern skipping...");
@@ -168,8 +165,12 @@ function init() {
 					} else {
 						log.debug("No source name pattern matches found for this script element")
 					}
-				};
-			}
+				}
+
+
+
+			};
+
 			tamperTarget[i].tm_scanned = "true";
 			log.debug("----End of SCRIPT DOM ELEMENT----\n\n\n");
 		}
