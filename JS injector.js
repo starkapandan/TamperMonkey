@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JS injector
 // @namespace    http://tampermonkey.net/
-// @version      0.3
+// @version      0.4
 // @description  try to take over the world!
 // @author       You
 // @run-at      document-start
@@ -24,22 +24,24 @@ var log = {
 
 var k2s_type_replacementbody = `
 //patch
-try {
-	var videolink = e.file.videoPreview.video;
-	if (videolink != undefined && videolink != "") {
-		var div = document.createElement("div");
-		div.href = videolink;
-		var totalMB = "?";
-		try{
-			var totalBytes = videolink.match(/(?<=response_limit=).*?(?=&|$)/is)[0];
-			totalMB = parseInt(parseInt(totalBytes) /1000/1000);
-		}catch(e){}
-		div.innerHTML = "<button><a href='" + videolink + "'><h1>Patch -> GO TO VIDEO (" + totalMB +"MB)</h1></a></button>";
-		document.body.insertBefore(div, document.body.firstChild);
-	}
-}catch(e){console.log("err: could not parse response limit")}
-console.log("the special object -> ", e);
-`;
+if(window.TM_INJECT == undefined){
+	try {
+		var videolink = e.file.videoPreview.video;
+		if (videolink != undefined && videolink != "") {
+			window.TM_INJECT = true;
+			var div = document.createElement("div");
+			div.href = videolink;
+			var totalMB = "?";
+			try{
+				var totalBytes = videolink.match(/(?<=response_limit=).*?(?=&|$)/is)[0];
+				totalMB = parseInt(parseInt(totalBytes) /1000/1000);
+			}catch(e){}
+			div.innerHTML = "<button><a href='" + videolink + "'><h1>Patch -> GO TO VIDEO (" + totalMB +"MB)</h1></a></button>";
+			document.body.insertBefore(div, document.body.firstChild);
+		}
+	}catch(e){console.log("err: could not parse response limit")}
+	console.log("the special object -> ", e);	
+}`;
 
 var LinkSearchPattern = [
 	{
