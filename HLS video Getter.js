@@ -32,6 +32,7 @@ var LinkSearchPattern = [
             { pattern: ".*mycdn.*type=2.*&id=.*&", title: "480p" },
             { pattern: ".*mycdn.*type=1.*&id=.*&", title: "360p" },
             { pattern: ".*mycdn.*expires=.*&id=.*&", title: "others" },
+            { pattern: ".*hls.*\.m3u8", title: "m3u8 file" },
         ],
     },
 ];
