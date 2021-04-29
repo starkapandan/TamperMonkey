@@ -4,9 +4,10 @@
 // @version      0.8
 // @description  try to take over the world!
 // @author       You
-// @match        http*://*kanald.com.tr/*
-// @match        http*://*vk.com/*
-// @match        http*://*discoveryplus.se/*
+// @match        *://*kanald.com.tr/*
+// @match        *://*vk.com/*
+// @match        *://*discoveryplus.se/*
+// @match        *://*pornhub.com*/*
 // @grant        none
 // ==/UserScript==
 
@@ -15,17 +16,17 @@
 //request, check if matches AND returned the captured part of the link!
 var LinkSearchPattern = [
     {
-        host: /kanald.com.tr/,
+        host: /kanald\.com\.tr/,
         request: [
         { pattern: /.*1000\/prog_index.m3u8.*/}
         ],
     }, {
-        host: /discoveryplus.se/,
+        host: /discoveryplus\.se/,
         request: [
             { pattern: /.*playlist.m3u8.*/, },
         ],
     }, {
-        host: /vk.com/,
+        host: /vk\.com/,
         request: [
             { pattern: /.*mycdn.*type=5.*&id=.*&/, title: "1080p" },
             { pattern: /.*mycdn.*type=3.*&id=.*&/, title: "720p" },
@@ -33,6 +34,12 @@ var LinkSearchPattern = [
             { pattern: /.*mycdn.*type=1.*&id=.*&/, title: "360p" },
             { pattern: /.*mycdn.*expires=.*&id=.*&/, title: "others" },
             { pattern: /.*hls.*\.m3u8/, title: "m3u8 file" },
+        ],
+    },
+    {
+        host: /pornhub\.com/,
+        request: [
+            { pattern: /.*index-f1.*\.m3u8.*/, title: "f1 hopefully best quality" },
         ],
     },
 ];
