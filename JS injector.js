@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JS injector
 // @namespace    http://tampermonkey.net/
-// @version      0.5
+// @version      0.6
 // @description  try to take over the world!
 // @author       You
 // @run-at      document-start
@@ -26,7 +26,7 @@ var k2s_type_replacementbody = `
 //patch
 if(window.TM_INJECT == undefined){
 	try {
-		var videolink = e.file.videoPreview.video;
+		var videolink = e.videoPreview.video;
 		if (videolink != undefined && videolink != "") {
 			window.TM_INJECT = true;
 			var div = document.createElement("div");
