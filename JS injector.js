@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JS injector
 // @namespace    http://tampermonkey.net/
-// @version      0.4
+// @version      0.5
 // @description  try to take over the world!
 // @author       You
 // @run-at      document-start
@@ -65,19 +65,16 @@ var LinkSearchPattern = [
 					},
 				]
 			},
-		],
+		]
+	},{
 		host: /(k2s\.cc|fboom\.me)/is,
 		scripts: [
 			{
 				srcNamePattern: /\/static\/js\/spa\/.*/is,
 				replacements: [
 					{
-						find: /ht\(e\)\{var t=e\.file/is,
-						replaceWith: "ht(e){" + k2s_type_replacementbody + "var t=e.file",
-					},
-					{
-						find: /var t=e\.captchaRequired/is,
-						replaceWith: k2s_type_replacementbody + "var t=e.captchaRequired",
+						find: /var t=e\.isDeleted/is,
+						replaceWith: k2s_type_replacementbody + "var t=e.isDeleted",
 					}
 				]
 			},
