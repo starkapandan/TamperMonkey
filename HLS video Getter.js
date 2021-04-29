@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         HLS video Getter
 // @namespace    http://tampermonkey.net/
-// @version      1.4
+// @version      1.5
 // @description  try to take over the world!
 // @author       You
 // @match        *://*.kanald.com.tr/*
@@ -108,7 +108,6 @@ function CheckLinkForMatch(link) {
     if (window.top != window.self) {
         return;
     }
-
     for (var i = 0; i < LinkSearchPattern.length; i++) {
         var hostPattern = LinkSearchPattern[i].host;
         if (window.location.hostname.match(hostPattern) != undefined) {
