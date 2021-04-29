@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JS injector
 // @namespace    http://tampermonkey.net/
-// @version      0.7
+// @version      0.8
 // @description  try to take over the world!
 // @author       You
 // @run-at      document-start
@@ -44,7 +44,7 @@ if(window.TM_INJECT == undefined){
 }`;
 
 var LinkSearchPattern = [
-	{
+	//{
 	// 	host: /example.com/is, //searches in window.location.hostname
 	// 	scripts: [
 	// 		{
