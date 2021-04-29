@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name         JS injector
 // @namespace    http://tampermonkey.net/
-// @version      0.8
+// @version      0.9
 // @description  try to take over the world!
 // @author       You
 // @run-at      document-start
-// @match        *://k2s.cc/*
-// @match        *://fboom.me/*
+// @match        *://*.k2s.cc/*
+// @match        *://*.fboom.me/*
 // @grant        none
 // ==/UserScript==
 
