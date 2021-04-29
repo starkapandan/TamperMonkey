@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         HLS video Getter
 // @namespace    http://tampermonkey.net/
-// @version      1.3
+// @version      1.4
 // @description  try to take over the world!
 // @author       You
 // @match        *://*.kanald.com.tr/*
@@ -39,7 +39,8 @@ var LinkSearchPattern = [
     {
         host: /pornhub\.com/,
         request: [
-            { pattern: /.*index-f1.*\.m3u8.*/, title: "f1 hopefully best quality" },
+            { pattern: /.*index-f1.*\.m3u8.*/, title: "F1 best quality" },
+            { pattern: /.*index-f[2-9].*\.m3u8.*/, title: "NOT best quality" },
         ],
     },
 ];
