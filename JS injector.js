@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name         JS injector
 // @namespace    http://tampermonkey.net/
-// @version      0.9
+// @version      0.7
 // @description  try to take over the world!
 // @author       You
 // @run-at      document-start
-// @match        *://*.k2s.cc/*
-// @match        *://*.fboom.me/*
+// @match        *://k2s.cc/*
+// @match        *://fboom.me/*
 // @grant        none
 // ==/UserScript==
 
@@ -44,30 +44,29 @@ if(window.TM_INJECT == undefined){
 }`;
 
 var LinkSearchPattern = [
-	//{
-	// 	host: /example.com/is, //searches in window.location.hostname
-	// 	scripts: [
-	// 		{
-	// 			srcNamePattern: /files\/js\/example.js/is, //check if this script from a source is called
-	// 			replacements: [
-	// 				{
-	// 					find: /hello world/is,  //find regex match in external script
-	// 					replaceWith: "alert('hello world')", //replace with string
-	// 				},
-	// 			]
-	// 		},
-	// 		{
-	// 			inlinePattern: /var init = 5;/is, //check for an inline script that contains this pattern
-	// 			replacements: [
-	// 				{
-	// 					find: /hello world/is,  //find regex match in external script
-	// 					replaceWith: "alert('hello world')", //replace with string
-	// 				},
-	// 			]
-	// 		},
-	// 	]
-	// },
 	{
+		host: /example.com/is, //searches in window.location.hostname
+		scripts: [
+			{
+				srcNamePattern: /files\/js\/example.js/is, //check if this script from a source is called
+				replacements: [
+					{
+						find: /hello world/is,  //find regex match in external script
+						replaceWith: "alert('hello world')", //replace with string
+					},
+				]
+			},
+			{
+				inlinePattern: /var init = 5;/is, //check for an inline script that contains this pattern
+				replacements: [
+					{
+						find: /hello world/is,  //find regex match in external script
+						replaceWith: "alert('hello world')", //replace with string
+					},
+				]
+			},
+		]
+	},{
 		host: /(k2s\.cc|fboom\.me)/is,
 		scripts: [
 			{
@@ -195,9 +194,6 @@ function checkIfHostInPatterns() {
 
 (function () {
 	'use strict';
-	if (window.top != window.self) {
-		return;
-	}
 	if (checkIfHostInPatterns() == false) {
 		return;
 	}
