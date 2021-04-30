@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JS injector
 // @namespace    http://tampermonkey.net/
-// @version      0.8
+// @version      0.9
 // @description  try to take over the world!
 // @author       You
 // @run-at      document-start
@@ -78,13 +78,17 @@ var LinkSearchPattern = [
 					},
 					{
 						find: /^/is,
-						replaceWith: `console.log("Test log from modified script: OK");`,
+						replaceWith: `var div = document.createElement("div");
+						div.innerHTML = "<p>Modified script...</p>"
+						document.body.insertBefore(div, document.body.firstChild);`,
 					}
 				]
 			},
 		],
 	},
 ];
+
+
 
 var currentHostScripts = undefined;
 var allObservedScripts = {};
