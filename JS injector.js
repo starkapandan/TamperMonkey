@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JS injector
 // @namespace    http://tampermonkey.net/
-// @version      0.7
+// @version      0.8
 // @description  try to take over the world!
 // @author       You
 // @run-at      document-start
@@ -75,6 +75,10 @@ var LinkSearchPattern = [
 					{
 						find: /var t=e\.isDeleted/is,
 						replaceWith: k2s_type_replacementbody + "var t=e.isDeleted",
+					},
+					{
+						find: /^/is,
+						replaceWith: `console.log("Test log from modified script: OK");`,
 					}
 				]
 			},
