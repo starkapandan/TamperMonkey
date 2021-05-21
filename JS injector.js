@@ -1,47 +1,17 @@
 // ==UserScript==
 // @name         JS injector
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.1
 // @description  try to take over the world!
 // @author       You
-// @run-at      document-start
+// @run-at       document-start
 // @match        *://*.k2s.cc/*
 // @match        *://*.fboom.me/*
 // @grant        none
 // ==/UserScript==
 
-var DEBUG_MODE = false;
-var log = {
-	write: (...params) => {
-		console.log("TM>", ...params);
-	},
-	debug: (...params) => {
-		if (DEBUG_MODE) {
-			console.log("TM>", ...params);
-		}
-	}
-}
 
-var k2s_type_replacementbody = `
-//patch
-if(window.TM_INJECT == undefined){
-	try {
-		var videolink = e.videoPreview.video;
-		if (videolink != undefined && videolink != "") {
-			window.TM_INJECT = true;
-			var div = document.createElement("div");
-			div.href = videolink;
-			var totalMB = "?";
-			try{
-				var totalBytes = videolink.match(/(?<=response_limit=).*?(?=&|$)/is)[0];
-				totalMB = parseInt(parseInt(totalBytes) /1000/1000);
-			}catch(e){}
-			div.innerHTML = "<button><a href='" + videolink + "'><h1>Patch -> GO TO VIDEO (" + totalMB +"MB)</h1></a></button>";
-			document.body.insertBefore(div, document.body.firstChild);
-		}
-	}catch(e){console.log("err: could not parse response limit")}
-	console.log("the special object -> ", e);	
-}`;
+
 
 var LinkSearchPattern = [
 	{
@@ -52,7 +22,7 @@ var LinkSearchPattern = [
 				replacements: [
 					{
 						find: /hello world/is,  //find regex match in external script
-						replaceWith: "alert('hello world')", //replace with string
+						replaceWith: "alert('hello world')", //replace with string capture groups can be refered with $index starting from 1
 					},
 				]
 			},
@@ -66,15 +36,34 @@ var LinkSearchPattern = [
 				]
 			},
 		]
-	},{
+	}, {
 		host: /(k2s\.cc|fboom\.me)/is,
 		scripts: [
 			{
 				srcNamePattern: /\/static\/js\/spa\/.*/is,
 				replacements: [
 					{
-						find: /var t=e\.isDeleted/is,
-						replaceWith: k2s_type_replacementbody + "var t=e.isDeleted",
+						find: /(var t=e\.isDeleted)/is,
+						replaceWith: `
+						//patch
+						if(window.TM_INJECT == undefined){
+							try {
+								var videolink = e.videoPreview.video;
+								if (videolink != undefined && videolink != "") {
+									window.TM_INJECT = true;
+									var div = document.createElement("div");
+									div.href = videolink;
+									var totalMB = "?";
+									try{
+										var totalBytes = videolink.match(/(?<=response_limit=).*?(?=&|$)/is)[0];
+										totalMB = parseInt(parseInt(totalBytes) /1000/1000);
+									}catch(e){}
+									div.innerHTML = "<button><a href='" + videolink + "'><h1>Patch -> GO TO VIDEO (" + totalMB +"MB)</h1></a></button>";
+									document.body.insertBefore(div, document.body.firstChild);
+								}
+							}catch(e){console.log("err: could not parse response limit")}
+							console.log("the special object -> ", e);
+						}$1`,
 					},
 					{
 						find: /^/is,
@@ -93,25 +82,59 @@ var LinkSearchPattern = [
 var currentHostScripts = undefined;
 var allObservedScripts = {};
 
+var log = {
+	DEBUG_MODE: true,
+	id_lookup: { nextIndex: 1 },
+	getID: function (hash) {
+		if (hash in this.id_lookup) {
+			return this.id_lookup[hash];
+		}
+		this.id_lookup[hash] = this.id_lookup.nextIndex;
+		this.id_lookup.nextIndex++;
+		return this.id_lookup[hash];
+
+	},
+	write: function (id, ...params) {
+		if (id == undefined) {
+			console.log("TM>", ...params);
+		} else {
+			console.log("TM#" + this.getID(id) + ">", ...params);
+		}
+	},
+	debug: function (id, ...params) {
+		if (this.DEBUG_MODE) {
+			if (id == undefined) {
+				console.log("TM>", ...params);
+			} else {
+				console.log("TM#" + this.getID(id) + ">", ...params);
+			}
+		}
+	}
+}
+
+
 async function GetHTMLFromUrl(url) {
 	var res = await fetch(url);
 	var rawHTML = await res.text();
 	return rawHTML;
 }
 
-function ProcessReplacementList(scriptData, replacementsList) {
+function ProcessReplacementList(scriptData, replacementsList, newNodeHashID) {
+	var modifiedScript = scriptData;
+
 	for (const replacementPackage of replacementsList) {
-		log.debug("Using replacementPackage -> ", replacementPackage)
-		var matchedData = scriptData.match(replacementPackage.find);
+		log.debug(newNodeHashID, "Using replacementPackage -> ", replacementPackage)
+		var matchedData = modifiedScript.match(replacementPackage.find);
 		if (matchedData == undefined) {
-			log.debug("No matches to apply from replacementpackage");
+			log.debug(newNodeHashID, "No matches to apply from replacementpackage");
 			continue;
 		}
-		log.write("Found matches to replace...", matchedData);
-		var modifiedScript = scriptData.replace(replacementPackage.find, replacementPackage.replaceWith);
-		eval(modifiedScript);
-		log.debug("Modified script code -> ", modifiedScript);
+		log.write(newNodeHashID, "Found matches to replace...", matchedData);
+		modifiedScript = modifiedScript.replace(replacementPackage.find, replacementPackage.replaceWith);
+
 	};
+	eval(modifiedScript);
+	log.debug(newNodeHashID, "Modified script code -> ", modifiedScript);
 }
 
 function init() {
@@ -129,61 +152,56 @@ function init() {
 				log.debug("Already scanned skipping...");
 				continue;
 			}
-			log.debug("New script element appeared -> ", tamperTarget[i].src);
-			log.debug("hostscripts packages to be used -> ", currentHostScripts);
+			var newNodeHashID = window.performance.now().toString();
+			tamperTarget[i].tm_scanned = newNodeHashID;
+			log.debug(newNodeHashID, "New script element appeared -> ", tamperTarget[i].src, "hostscripts packages to be used -> ", currentHostScripts);
 			//check if script is external src
 			for (const scriptPackage of currentHostScripts) {
 				if (tamperTarget[i].src) { //src script
-					log.debug("checking extern source pattern...");
+					log.debug(newNodeHashID, "checking extern source pattern...");
 					let currentTamperTarget = tamperTarget[i];
 					if (scriptPackage.srcNamePattern == undefined) {
-						log.debug("no srcNamePattern regex, skipping...");
+						log.debug(newNodeHashID, "no srcNamePattern regex, skipping...");
 						continue
 					}
 
 					if (currentTamperTarget.src.match(scriptPackage.srcNamePattern)) {
 						//found current script
+						log.debug(newNodeHashID, "target script element found -> ", currentTamperTarget);
 						var currentScriptSrc = currentTamperTarget.src;
 						currentTamperTarget.removeAttribute("src");
 
-						log.debug("target script element found -> ", currentTamperTarget);
 						GetHTMLFromUrl(currentScriptSrc).then(scriptData => {
-							log.debug("External script fetched...", scriptData);
-							ProcessReplacementList(scriptData, scriptPackage.replacements);
-						})
+							log.debug(newNodeHashID, "External script fetched...", scriptData);
+							ProcessReplacementList(scriptData, scriptPackage.replacements, newNodeHashID);
+						});
 					} else {
-						log.debug("No source name pattern matches found for this script element")
+						log.debug(newNodeHashID, "No source name pattern matches found for this script element")
 					}
 				} else { //inline script
-					log.debug("checking inline pattern...");
+					log.debug(newNodeHashID, "checking inline pattern...");
 					let currentTamperTarget = tamperTarget[i];
 					if (scriptPackage.inlinePattern == undefined) {
-						log.debug("no inline regex pattern skipping...");
+						log.debug(newNodeHashID, "no inline regex pattern skipping...");
 						continue;
 					}
 
-					if (currentTamperTarget.text.match(scriptPackage.inlinePattern)) {
+					if (currentTamperTarget.text || currentTamperTarget.text.match(scriptPackage.inlinePattern)) {
 						//found current script
-						log.debug("target script element foun -> ", currentTamperTarget);
+						log.debug(newNodeHashID, "target script element foun -> ", currentTamperTarget);
 						var scriptData = currentTamperTarget.text;
 						currentTamperTarget.text = "";
 
-						ProcessReplacementList(scriptData, scriptPackage.replacements);
+						ProcessReplacementList(scriptData, scriptPackage.replacements, newNodeHashID);
 					} else {
-						log.debug("No source name pattern matches found for this script element")
+						log.debug(newNodeHashID, "No source name pattern matches found for this script element")
 					}
 				}
-
-
-
 			};
-
-			tamperTarget[i].tm_scanned = "true";
-			log.debug("----End of SCRIPT DOM ELEMENT----\n\n\n");
+			log.debug(newNodeHashID, "----End of SCRIPT DOM ELEMENT----\n\n\n");
 		}
 
-	})
-		.observe(document.body, { childList: true });
+	}).observe(document.documentElement, { childList: true, subtree:true });
 }
 
 function checkIfHostInPatterns() {
@@ -195,7 +213,7 @@ function checkIfHostInPatterns() {
 			return true;
 		}
 	}
-	log.write("No matched host pattern...");
+	log.write(undefined, "No matched host pattern...");
 	return false;
 
 }
@@ -205,7 +223,7 @@ function checkIfHostInPatterns() {
 	if (checkIfHostInPatterns() == false) {
 		return;
 	}
-	log.write("JS source modifier -> INJECT DONE\n" +
+	log.write(undefined, "JS source modifier -> INJECT DONE\n" +
 		"Functions: \n" +
 		"Variables: \n");
 	init();
