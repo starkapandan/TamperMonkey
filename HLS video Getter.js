@@ -16,31 +16,31 @@
 //request, check if matches AND returned the captured part of the link!
 var LinkSearchPattern = [
     {
-        host: /kanald\.com\.tr/,
+        host: /kanald\.com\.tr/i,
         request: [
-        { pattern: /.*1000\/prog_index.m3u8.*/}
+            { pattern: /1000\/prog_index.m3u8/i }
         ],
     }, {
-        host: /discoveryplus\.se/,
+        host: /discoveryplus\.se/i,
         request: [
-            { pattern: /.*playlist.m3u8.*/, },
+            { pattern: /playlist.m3u8/i, },
         ],
     }, {
-        host: /vk\.com/,
+        host: /vk\.com/i,
         request: [
-            { pattern: /.*mycdn.*type=5.*&id=.*&/, title: "1080p" },
-            { pattern: /.*mycdn.*type=3.*&id=.*&/, title: "720p" },
-            { pattern: /.*mycdn.*type=2.*&id=.*&/, title: "480p" },
-            { pattern: /.*mycdn.*type=1.*&id=.*&/, title: "360p" },
-            { pattern: /.*mycdn.*expires=.*&id=.*&/, title: "others" },
-            { pattern: /.*hls.*\.m3u8/, title: "m3u8 file" },
+            { pattern: /mycdn\.me\/.*type=5/i, replace: [{ find: /bytes.*?(&|$)/i, replaceWith: "$1" }], title: "1080p" },
+            { pattern: /mycdn\.me\/.*type=3/i, replace: [{ find: /bytes.*?(&|$)/i, replaceWith: "$1" }], title: "720p" },
+            { pattern: /mycdn\.me\/.*type=2/i, replace: [{ find: /bytes.*?(&|$)/i, replaceWith: "$1" }], title: "480p" },
+            { pattern: /mycdn\.me\/.*type=1/i, replace: [{ find: /bytes.*?(&|$)/i, replaceWith: "$1" }], title: "360p" },
+            { pattern: /mycdn\.me\/.*?id=/i, replace: [{ find: /bytes.*?(&|$)/i, replaceWith: "$1" }], title: "others" },
+            { pattern: /hls.*\.m3u8/i, title: "m3u8 file" },
         ],
     },
     {
-        host: /pornhub\.com/,
+        host: /pornhub\.com/i,
         request: [
-            { pattern: /.*index-f1.*\.m3u8.*/, title: "F1 best quality" },
-            { pattern: /.*index-f[2-9].*\.m3u8.*/, title: "NOT best quality" },
+            { pattern: /index-f1.*\.m3u8/i, title: "F1 best quality" },
+            { pattern: /index-f[2-9].*\.m3u8/i, title: "NOT best quality" },
         ],
     },
 ];
@@ -79,12 +79,17 @@ function is404(link) {
 
 function seekPattern(link) {
     for (var i = 0; i < activeHostPatterns.length; i++) {
-        var requestPattern = activeHostPatterns[i].pattern;
-        var matches = link.match(requestPattern);
-        if (matches) {
-            var returnPack = {matched: matches[0], title: ""};
-            if("title" in activeHostPatterns[i]){
-                returnPack.title = activeHostPatterns[i].title;
+        var requestConfig = activeHostPatterns[i];
+        if (link.match(requestConfig.pattern)) {
+            var matchedLink = link
+            if (requestConfig.replace) {
+                for (const replacementConfig of requestConfig.replace) {
+                    matchedLink = matchedLink.replace(replacementConfig.find, replacementConfig.replaceWith);
+                }
+            }
+            var returnPack = { matched: matchedLink, title: "" };
+            if (requestConfig.title) {
+                returnPack.title = requestConfig.title;
             }
             return returnPack;
         }
@@ -125,7 +130,7 @@ function CheckLinkForMatch(link) {
     window.list = function () {
         console.log(savedLinks.join("\n"));
     }
-    window.clearList = function(){
+    window.clearList = function () {
         savedLinks = [];
     }
     window.savedLinks = savedLinks;
