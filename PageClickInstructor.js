@@ -23,17 +23,20 @@ var elementType = {
 //Explanations:
 //
 //------------------------------------------------------------------------------------
-//1.1: host        -> check if current browser url matches window.location.hostname
-//1.2: actionQueue[] -> list of actions to perform on page, each action is performed in order listed
-//  1.2.1: elementFilterQueue[] -> Filter through the page, each successive pattern inherits from filtered item on consecutive indexes
-//      1.2.1.1 pattern<regexPattern>  //regex pattern to find a specific type<elementType>
-//      1.2.1.2 type<elementType>      //type of element to search for such as class, ID, tag etc...
-//      1.2.1.3 async filterFunction(NodeList) => returns NodeList //Can be used alone, incase pattern + type is used then the filterFunction is called FIRST
-//      1.2.1.4 tryFinal<bool> //optional, when specified true, if it finds any element then it ENDS filtering queue, if NO element is found, then filtering is continued from PREVIOUS filter results
-//  1.2.2: action<elementActions> -> Perform this action on the found element
+//1.1: host             -> check if current browser url matches window.location.hostname
+//1.2: retryCount<int>  -> optional, incase ANY of the actionQueue results in no elements being found then retry every 1 second
+//1.3: actionQueue[]    -> list of actions to perform on page, each action is performed in order listed
+//  1.3.1: elementFilterQueue[] -> Filter through the page, each successive pattern inherits from filtered item on consecutive indexes
+//      1.3.1.1 pattern<regexPattern>  //regex pattern to find a specific type<elementType>
+//      1.3.1.2 type<elementType>      //type of element to search for such as class, ID, tag etc...
+//      1.3.1.3 async filterFunction(NodeList) => returns NodeList //Can be used alone, incase pattern + type is used then the filterFunction is called FIRST
+//      1.3.1.4 tryFinal<bool> //optional, when specified true, if it finds any element then it ENDS filtering queue, if NO element is found, then filtering is continued from PREVIOUS filter results
+//      1.3.1.4 delayMS<int> //optional, Specify a delay in milliseconds before a filter in the queue will run
+//  1.3.2: action<elementActions> -> Perform this action on the found element
 var LinkSearchPattern = [
     {
         host: /example\.com/i,
+        RetryCount: 0, // retry 0 times ever 1 second incase any of the actionQueue can't find element
         actionQueue: [
             {
                 elementFilterQueue: [ //Filter through the page, each successive pattern inherits from filtered item on previous index
@@ -52,14 +55,14 @@ var LinkSearchPattern = [
             {
                 elementFilterQueue: [
                     { pattern: /body/i, type: elementType.tag },
-                    { pattern: /loginBtnID/i, type: elementType.ID },
+                    { pattern: /loginBtnID/i, type: elementType.ID, delayMS: 200}, //200 ms waiting before this filter is processed
                 ],
                 action: elementActions.click
             },
             {
                 elementFilterQueue: [
                     { pattern: /body/i, type: elementType.tag },
-                    { pattern: /loginBtn_1/i, type: elementType.ID, tryFinal: true }, //ends if match, else continue from "body" pattern
+                    { pattern: /loginBtn_1/i, type: elementType.ID, tryFinal: true }, //ends if match, else continue from "body" pattern aka first pattern that did not have tryFinal
                     { pattern: /loginBtn_2/i, type: elementType.ID, tryFinal: true }, //ends if match, else continue from "body" pattern
                     { pattern: /loginBtn_3/i, type: elementType.ID, tryFinal: true }, //ends if match, else continue from "body" pattern
                 ],
@@ -69,6 +72,7 @@ var LinkSearchPattern = [
     },
     {
         host: /vk\.com/i,
+        RetryCount: 7,
         actionQueue: [
             {
                 elementFilterQueue: [
@@ -87,8 +91,7 @@ var LinkSearchPattern = [
                     { pattern: /videoplayer_settings_menu_sublist_item/i, type: elementType.class },
                     {
                         filterFunction: async (NodeList) => {
-                            var MaxQualityDiv = undefined, tryCounter=0;
-                            while (MaxQualityDiv == undefined && tryCounter < 10) {
+                            var MaxQualityDiv = undefined;
                                 var MaxQuality = 0;
                                 for (var i = 0; i < NodeList.length; i++) {
                                     var quality = parseInt(NodeList[i].dataset.value)
@@ -97,11 +100,6 @@ var LinkSearchPattern = [
                                         MaxQuality = quality;
                                     } 
                                 }
-                                if (MaxQualityDiv == undefined) {
-                                    await new Promise(r => setTimeout(r, 1000));
-                                }
-                                tryCounter++;
-                            }
                             return MaxQualityDiv ? [MaxQualityDiv] : [];
                         }
                     }
