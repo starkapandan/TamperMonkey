@@ -30,8 +30,8 @@ function sleep(ms) {
             }
         }
         while(bookmarkFound == false){
-            window.scrollTo(0,document.body.scrollHeight);
-            await sleep(300);
+            window.scrollBy(0,300)
+            await sleep(20);
         }
 
     }

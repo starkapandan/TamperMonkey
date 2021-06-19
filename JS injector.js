@@ -83,7 +83,7 @@ var currentHostScripts = undefined;
 var allObservedScripts = {};
 
 var log = {
-	DEBUG_MODE: true,
+	DEBUG_MODE: false,
 	id_lookup: { nextIndex: 1 },
 	getID: function (hash) {
 		if (hash in this.id_lookup) {
