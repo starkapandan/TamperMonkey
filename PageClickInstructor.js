@@ -95,7 +95,7 @@ var LinkSearchPattern = [
                                     if (isNaN(quality) == false && quality > MaxQuality) {
                                         MaxQualityDiv = NodeList[i]; 
                                         MaxQuality = quality;
-                                    }
+                                    } 
                                 }
                                 if (MaxQualityDiv == undefined) {
                                     await new Promise(r => setTimeout(r, 1000));
