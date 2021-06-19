@@ -93,7 +93,7 @@ var LinkSearchPattern = [
                                 for (var i = 0; i < NodeList.length; i++) {
                                     var quality = parseInt(NodeList[i].dataset.value)
                                     if (isNaN(quality) == false && quality > MaxQuality) {
-                                        MaxQualityDiv = NodeList[i];
+                                        MaxQualityDiv = NodeList[i]; 
                                         MaxQuality = quality;
                                     }
                                 }
