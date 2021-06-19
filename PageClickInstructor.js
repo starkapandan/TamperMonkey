@@ -107,7 +107,7 @@ var LinkSearchPattern = [
                     }
                 ],
                 action: elementActions.click
-            },
+            }, 
         ],
     },
 ];
