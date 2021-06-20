@@ -9,14 +9,15 @@
 // @run-at       document-start
 // ==/UserScript==
 
-var elementActions = {
+var ElementActionEnum = {
     click: 1,
 };
-var elementType = {
+var ElementTypeEnum = {
     ID: 1,
     class: 2,
     tag: 3,
-    innerText: 4,
+    innerText: 4, //also allows regex expressions, otherwise apply simple string.contains()
+    querySelectorAll: 5,
 };
 
 //------------------------------------------------------------------------------------
@@ -24,7 +25,7 @@ var elementType = {
 //
 //------------------------------------------------------------------------------------
 //1.1: host             -> check if current browser url matches window.location.hostname
-//1.2: retryCount<int>  -> optional, incase ANY of the actionQueue results in no elements being found then retry every 1 second
+//1.2: retryCount<int>  -> optional, incase ANY of the actionQueue results in no elements being found then retry every 1 second (retryCount==-1 means try inifinite amount)
 //1.3: actionQueue[]    -> list of actions to perform on page, each action is performed in order listed
 //  1.3.1: elementFilterQueue[] -> Filter through the page, each successive pattern inherits from filtered item on consecutive indexes
 //      1.3.1.1 pattern<regexPattern>  //regex pattern to find a specific type<elementType>
@@ -40,33 +41,33 @@ var LinkSearchPattern = [
         actionQueue: [
             {
                 elementFilterQueue: [ //Filter through the page, each successive pattern inherits from filtered item on previous index
-                    { pattern: /navbarClass/i, type: elementType.class },
-                    { pattern: /navbarBtnClass/i, type: elementType.class },
+                    { find: "navbarClass", type: ElementTypeEnum.class },
+                    { find: "navbarBtnClass", type: ElementTypeEnum.class },
                     //function filters, param is array of previous filter, return filtered js node element array
                     {
                         filterFunction: async (NodeList) => {
                             return NodeList;
                         }
                     },
-                    { pattern: /Go Home/i, type: elementType.innerText },
+                    { find: "Go Home", type: ElementTypeEnum.innerText },
                 ],
-                action: elementActions.click, //Perform this action on the found element
+                action: ElementActionEnum.click, //Perform this action on the found element
             },
             {
                 elementFilterQueue: [
-                    { pattern: /body/i, type: elementType.tag },
-                    { pattern: /loginBtnID/i, type: elementType.ID, delayMS: 200}, //200 ms waiting before this filter is processed
+                    { find: "body", type: ElementTypeEnum.tag },
+                    { find: "loginBtnID", type: ElementTypeEnum.ID, delayMS: 200 }, //200 ms waiting before this filter is processed
                 ],
-                action: elementActions.click
+                action: ElementActionEnum.click
             },
             {
                 elementFilterQueue: [
-                    { pattern: /body/i, type: elementType.tag },
-                    { pattern: /loginBtn_1/i, type: elementType.ID, tryFinal: true }, //ends if match, else continue from "body" pattern aka first pattern that did not have tryFinal
-                    { pattern: /loginBtn_2/i, type: elementType.ID, tryFinal: true }, //ends if match, else continue from "body" pattern
-                    { pattern: /loginBtn_3/i, type: elementType.ID, tryFinal: true }, //ends if match, else continue from "body" pattern
+                    { find: "body", type: ElementTypeEnum.tag },
+                    { find: "loginBtn_1", type: ElementTypeEnum.ID, tryFinal: true }, //ends if match, else continue from "body" pattern aka first pattern that did not have tryFinal
+                    { find: "loginBtn_2", type: ElementTypeEnum.ID, tryFinal: true }, //ends if match, else continue from "body" pattern
+                    { find: "loginBtn_3", type: ElementTypeEnum.ID, tryFinal: true }, //ends if match, else continue from "body" pattern
                 ],
-                action: elementActions.click
+                action: ElementActionEnum.click
             }
         ],
     },
@@ -76,98 +77,214 @@ var LinkSearchPattern = [
         actionQueue: [
             {
                 elementFilterQueue: [
-                    { pattern: /videoplayer_btn_settings/i, type: elementType.class },
+                    { find: "videoplayer_btn_settings", type: ElementTypeEnum.class },
                 ],
-                action: elementActions.click,
+                action: ElementActionEnum.click,
             },
             {
                 elementFilterQueue: [
-                    { pattern: /videoplayer_settings_menu_list_item_quality/i, type: elementType.class },
+                    { find: "videoplayer_settings_menu_list_item_quality", type: ElementTypeEnum.class },
                 ],
-                action: elementActions.click
+                action: ElementActionEnum.click
             },
             {
                 elementFilterQueue: [
-                    { pattern: /videoplayer_settings_menu_sublist_item/i, type: elementType.class },
+                    { find: "videoplayer_settings_menu_sublist_item", type: ElementTypeEnum.class },
                     {
                         filterFunction: async (NodeList) => {
                             var MaxQualityDiv = undefined;
-                                var MaxQuality = 0;
-                                for (var i = 0; i < NodeList.length; i++) {
-                                    var quality = parseInt(NodeList[i].dataset.value)
-                                    if (isNaN(quality) == false && quality > MaxQuality) {
-                                        MaxQualityDiv = NodeList[i]; 
-                                        MaxQuality = quality;
-                                    } 
+                            var MaxQuality = 0;
+                            for (var i = 0; i < NodeList.length; i++) {
+                                var quality = parseInt(NodeList[i].dataset.value)
+                                if (isNaN(quality) == false && quality > MaxQuality) {
+                                    MaxQualityDiv = NodeList[i];
+                                    MaxQuality = quality;
                                 }
+                            }
                             return MaxQualityDiv ? [MaxQualityDiv] : [];
                         }
                     }
                 ],
-                action: elementActions.click
-            }, 
+                action: ElementActionEnum.click
+            },
         ],
     },
 ];
-var activeHostPatterns = undefined;
-var savedLinks = [];
 
-function addXMLRequestCallback(callback) {
-    var oldSend, i;
-    if (XMLHttpRequest.callbacks) {
-        var x = $("something appearance");
-        XMLHttpRequest.callbacks.push(callback);
-    } else {
-        XMLHttpRequest.callbacks = [callback];
-        oldSend = XMLHttpRequest.prototype.send;
-        XMLHttpRequest.prototype.send = function () {
-            for (i = 0; i < XMLHttpRequest.callbacks.length; i++) {
-                XMLHttpRequest.callbacks[i](this);
+var app_tm = {
+    activeHostPackage: undefined,
+    currentSearchArray: undefined,
+    on_actionNotFound_waitTime= 1000, //milli seconds
+    DEBUG_MODE: false,
+    log: function (...params) {
+        console.log("TM>", ...params);
+    },
+    debug: function (...params) {
+        if (this.DEBUG_MODE) {
+            this.write(...params)
+        }
+    },
+    sleep: async function (ms) {
+        await new Promise(r => setTimeout(r, ms));
+    }
+}
+
+function GetElementListByType(findString, elementType, currentSearchArray) {
+    var matchingObjects = [];
+    switch (elementType) {
+        case ElementTypeEnum.ID:
+            var foundObject = document.getElementById(findString)
+            if (foundObject != null) {
+                matchingObjects.push(foundObject);
             }
-            oldSend.apply(this, arguments);
-        };
-    }
-}
-
-function is404(link) {
-    var http = new XMLHttpRequest();
-    http.open("HEAD", link, false);
-    http.send();
-    if (http.status == 404) {
-        return true;
-    } else {
-        return false;
-    }
-}
-
-function seekPattern(link) {
-    for (var i = 0; i < activeHostPatterns.length; i++) {
-        var requestConfig = activeHostPatterns[i];
-        if (link.match(requestConfig.pattern)) {
-            var matchedLink = link;
-            if (requestConfig.replace) {
-                for (const replacementConfig of requestConfig.replace) {
-                    matchedLink = matchedLink.replace(replacementConfig.find, replacementConfig.replaceWith);
+            break;
+        case ElementTypeEnum.class:
+            for (searchLocation in currentSearchArray) {
+                var foundObjects = currentSearchLocation.getElementsByClassName(findString);
+                for (var i = 0; i < foundObjects.length; i++) {
+                    matchingObjects.push(foundObjects[i]);
                 }
             }
-            var returnPack = { matched: matchedLink, title: "" };
-            if (requestConfig.title) {
-                returnPack.title = requestConfig.title;
+            break;
+        case ElementTypeEnum.innerText:
+            findStringIsRegex = findString instanceof RegExp;
+            for (searchLocation in currentSearchArray) {
+                if (findStringIsRegex) { //is regex /regexcode/i
+                    if (searchLocation.textContent.match(findString)) {
+                        matchingObjects.push(searchLocation);
+                    }
+                } else { //is string, check if contains "example"
+                    if (searchLocation.textContent.contains(findString)) {
+                        matchingObjects.push(searchLocation);
+                    }
+                }
             }
-            return returnPack;
-        }
+            break;
+        case ElementTypeEnum.tag:
+            var foundObjects = currentSearchLocation.get(findString);
+            for (var i = 0; i < foundObjects.length; i++) {
+                matchingObjects.push(foundObjects[i]);
+            }
+            break;
+        case ElementTypeEnum.querySelectorAll:
+            var foundObjects = currentSearchLocation.querySelectorAll(findString);
+            for (var i = 0; i < foundObjects.length; i++) {
+                matchingObjects.push(foundObjects[i]);
+            }
+            break;
+        default:
+            throw "elementType is not of ElementTypeEnum!";
     }
-
-    return false;
+    return foundObjects;
 }
 
-function CheckLinkForMatch(link) {
-    //console.log(link)
-    var linkState = seekPattern(link);
-    if (linkState != false && savedLinks.includes(linkState.matched) == false) {
-        console.log(`LINKLOG>${linkState.title}\n${linkState.matched}`);
-        savedLinks.push(linkState.matched);
+async function PerformElementFilter(elementFilterPackage, currentSearchArray) {
+    filteredSearchArray = currentSearchArray;
+    app_tm.debug("Before performing element filter = ", filteredSearchArray);
+
+    if (elementFilterPackage.delayMS != undefined) {
+        app_tm.debug("sleeping for " + delayMS + "MS before running elementFilterPackage:", elementFilterPackage);
+        await app_tm.sleep(delayMS);
     }
+    if (elementFilterPackage.filterFunction != undefined) {
+        app_tm.debug("Running Filter function");
+        filteredSearchArray = await elementFilterPackage.filterFunction(filteredSearchArray);
+        app_tm.debug("after filter function = ", filteredSearchArray);
+    }
+    if (elementFilterPackage.find || elementFilterPackage.type) {
+        if (elementFilterPackage.find && elementFilterPackageList.type) {
+            filteredSearchArray = GetElementListByType(elementFilterPackage.find, elementFilterPackage.type, filteredSearchArray);
+
+            app_tm.debug("after find element by string = ", filteredSearchArray);
+        } else {
+            console.error("you cannot only specify one of keys 'type' or 'find' since they work together, specify both.");
+        }
+    }
+    app_tm.debug("Fully filtered single elementFilter -> ", filteredSearchArray);
+    return filteredSearchArray;
+}
+
+async function ProcessElementFilterQueue(elementFilterPackageList) {
+    var currentSearchArray = [document];
+    for (elementFilter in elementFilterPackageList) {
+        currentSearchArray = await PerformElementFilter(elementFilter, currentSearchArray);
+    }
+    if (currentSearchArray.length == 0) {
+        return undefined;
+    } else if (currentSearchArray.length > 1) {
+        app_tm.debug("filtered search result is more than one element, action will be performed on first index -> ", currentSearchArray)
+    }
+    return currentSearchArray[0];
+}
+
+async function PerformAction(actionPackage) {
+    var result = await ProcessElementFilterQueue(actionPackage.elementFilterQueue);
+    if (result == undefined) { //no element found to apply action
+        app_tm.debug("No element to perform action on found for ", actionPackage);
+        return false;
+    }
+
+    if (actionPackage.action != undefined) { //action exists
+        switch (actionPackage.action) {
+            case ElementActionEnum.click:
+                app_tm.log("Clicked on ", result);
+                result.click();
+                break;
+            default:
+                throw "Type must be of ElementActionEnum!";
+        }
+    } else { //element found but no action specified
+        app_tm.log("Element was found but no action specified to perform on -> ", result);
+    }
+    return true;
+
+}
+
+async function ProcessActionQueue(actionPackageList) {
+    var actionsDidNotFindTarget = false;
+    for (actionPackage in actionPackageList) {
+        var foundTarget = await PerformAction(actionPackage);
+        if (!foundTarget) {
+            actionsDidNotFindTarget = true;
+        }
+    }
+    if(actionsDidNotFindTarget){
+        return false; //fail, send for retry if requested
+    }
+    return true;
+
+
+
+}
+async function init() {
+    var retryCount = 0;
+    while(true){
+        var success = ProcessActionQueue(app_tm.activeHostPackage.actionQueue);
+        if(success){
+            break;
+        }
+        retryCount++;
+        if(app_tm.activeHostPackage.RetryCount == undefined || retryCount > app_tm.activeHostPackage.RetryCount){
+            break;
+        }else{
+            app_tm.log("One of the actions did not find target, retrying action queue... retry count " + retryCount);
+            await app_tm.sleep(app_tm.on_actionNotFound_waitTime);
+        }
+    }
+}
+
+function checkIfHostInPatterns() {
+
+    for (var i = 0; i < LinkSearchPattern.length; i++) {
+        var hostPattern = LinkSearchPattern[i].host;
+        if (window.location.hostname.match(hostPattern) != undefined) {
+            app_tm.activeHostPackage = LinkSearchPattern[i];
+            return true;
+        }
+    }
+    log.write(undefined, "No matched host pattern...");
+    return false;
+
 }
 
 (function () {
@@ -175,28 +292,11 @@ function CheckLinkForMatch(link) {
     if (window.top != window.self) {
         return;
     }
-    for (var i = 0; i < LinkSearchPattern.length; i++) {
-        var hostPattern = LinkSearchPattern[i].host;
-        if (window.location.hostname.match(hostPattern) != undefined) {
-            activeHostPatterns = LinkSearchPattern[i].request;
-            break;
-        }
-    }
-    if (activeHostPatterns == undefined) {
-        console.log("TM: No matched host pattern...");
+    if (checkIfHostInPatterns() == false) {
         return;
     }
-    console.log("HLS VIDEO GETTER -> INJECT DONE\n" + "Functions: list(), clearList()\n" + "Variables: savedLinks\n");
-    window.list = function () {
-        console.log(savedLinks.join("\n"));
-    };
-    window.clearList = function () {
-        savedLinks = [];
-    };
-    window.savedLinks = savedLinks;
-    addXMLRequestCallback(function (xhr) {
-        xhr.onload = function () {
-            CheckLinkForMatch(xhr.responseURL);
-        };
-    });
+    log.write(undefined, "PageClickInstructor -> INJECT DONE\n" +
+        "Functions: \n" +
+        "Variables: \n");
+    init();
 })();
