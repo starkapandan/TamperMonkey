@@ -6,7 +6,7 @@
 // @author       You
 // @match        *://*.vk.com/*
 // @grant        none
-// @run-at       document-start
+// @run-at       document-end
 // ==/UserScript==
 
 var ElementActionEnum = {
@@ -16,7 +16,7 @@ var ElementTypeEnum = {
     ID: 1,
     class: 2,
     tag: 3,
-    innerText: 4, //also allows regex expressions, otherwise apply simple string.contains()
+    innerText: 4, //also allows regex expressions, otherwise apply simple string.includes()
     querySelectorAll: 5,
 };
 
@@ -125,7 +125,7 @@ var app_tm = {
         init();
     },
     //standard stuctury
-    DEBUG_MODE: false,
+    DEBUG_MODE: true,
     log: function (...params) {
         console.log("TM>", ...params);
     },
@@ -169,22 +169,26 @@ function GetElementListByType(findString, elementType, currentSearchArray) {
                         matchingObjects.push(searchLocation);
                     }
                 } else { //is string, check if contains "example"
-                    if (searchLocation.textContent.includes(findString)) {
+                    if (searchLocation.textContent.toLowerCase().includes(findString)) {
                         matchingObjects.push(searchLocation);
                     }
                 }
             }
             break;
         case ElementTypeEnum.tag:
-            var foundObjects = currentSearchArray.get(findString);
-            for (var i = 0; i < foundObjects.length; i++) {
-                matchingObjects.push(foundObjects[i]);
+            for(const searchLocation of currentSearchArray){
+                var foundObjects = searchLocation.getElementsByTagName(findString);
+                for (var i = 0; i < foundObjects.length; i++) {
+                    matchingObjects.push(foundObjects[i]);
+                }
             }
             break;
         case ElementTypeEnum.querySelectorAll:
-            var foundObjects = currentSearchArray.querySelectorAll(findString);
-            for (var i = 0; i < foundObjects.length; i++) {
-                matchingObjects.push(foundObjects[i]);
+            for(const searchLocation of currentSearchArray){
+                var foundObjects = currentSearchArray.querySelectorAll(findString);
+                for (var i = 0; i < foundObjects.length; i++) {
+                    matchingObjects.push(foundObjects[i]);
+                }
             }
             break;
         default:
