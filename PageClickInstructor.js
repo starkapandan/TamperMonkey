@@ -159,7 +159,7 @@ function GetElementListByType(findString, elementType, currentSearchArray) {
                         matchingObjects.push(searchLocation);
                     }
                 } else { //is string, check if contains "example"
-                    if (searchLocation.textContent.contains(findString)) {
+                    if (searchLocation.textContent.includes(findString)) {
                         matchingObjects.push(searchLocation);
                     }
                 }
@@ -180,16 +180,16 @@ function GetElementListByType(findString, elementType, currentSearchArray) {
         default:
             throw "elementType is not of ElementTypeEnum!";
     }
-    return foundObjects;
+    return matchingObjects;
 }
 
 async function PerformElementFilter(elementFilterPackage, currentSearchArray) {
     filteredSearchArray = currentSearchArray;
-    app_tm.debug("Before performing element filter = ", filteredSearchArray);
+    app_tm.debug("Element Filter to be applied",elementFilterPackage, " On current searchArray", currentSearchArray);
 
     if (elementFilterPackage.delayMS != undefined) {
-        app_tm.debug("sleeping for " + delayMS + "MS before running elementFilterPackage:", elementFilterPackage);
-        await app_tm.sleep(delayMS);
+        app_tm.debug("sleeping for " + elementFilterPackage.delayMS + "MS before running elementFilterPackage:", elementFilterPackage);
+        await app_tm.sleep(elementFilterPackage.delayMS);
     }
     if (elementFilterPackage.filterFunction != undefined) {
         app_tm.debug("Running Filter function");
@@ -199,8 +199,6 @@ async function PerformElementFilter(elementFilterPackage, currentSearchArray) {
     if (elementFilterPackage.find || elementFilterPackage.type) {
         if (elementFilterPackage.find && elementFilterPackage.type) {
             filteredSearchArray = GetElementListByType(elementFilterPackage.find, elementFilterPackage.type, filteredSearchArray);
-
-            app_tm.debug("after find element by string = ", filteredSearchArray);
         } else {
             console.error("you cannot only specify one of keys 'type' or 'find' since they work together, specify both.");
         }
@@ -212,11 +210,22 @@ async function PerformElementFilter(elementFilterPackage, currentSearchArray) {
 async function ProcessElementFilterQueue(elementFilterPackageList) {
     var currentSearchArray = [document];
     for (const elementFilter of elementFilterPackageList) {
-        currentSearchArray = await PerformElementFilter(elementFilter, currentSearchArray);
-        if (currentSearchArray.length == 0) {
-            app_tm.debug_warn("search array is empty, not procceding with rest of elementFilters")
+        var filteredSearchArray = await PerformElementFilter(elementFilter, currentSearchArray);
+        if(elementFilter.tryFinal){ // empty array backtracks to non filtered search array, on full array finish filter early
+            if (filteredSearchArray.length == 0) {
+                app_tm.debug("tryFinal did not find final element, backtracking to non filtered seach array");
+                continue;
+            }else{
+                currentSearchArray = filteredSearchArray
+                app_tm.debug("tryFinal found target element, exiting elementFilter queue early");
+                break;
+            }
+        }
+        if (filteredSearchArray.length == 0) {
+            app_tm.debug_warn("filtered array is empty, not procceding with rest of elementFilters")
             return undefined;
         }
+        currentSearchArray = filteredSearchArray;
     }
     if (currentSearchArray.length > 1) {
         app_tm.debug_warn("filtered search result is more than one element, action will be performed on first index -> ", currentSearchArray)
@@ -295,6 +304,11 @@ function checkIfHostInPatterns() {
     return false;
 
 }
+function AddGlobalFunctions(){
+    window.RunAgain = () => {
+        init();
+    }
+}
 
 (function () {
     "use strict";
@@ -305,7 +319,8 @@ function checkIfHostInPatterns() {
         return;
     }
     app_tm.log(undefined, "PageClickInstructor -> INJECT DONE\n" +
-        "Functions: \n" +
+        "Functions: RunAgain()\n" +
         "Variables: \n");
+    AddGlobalFunctions();
     init();
 })();
