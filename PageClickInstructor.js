@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         HLS video Getter
+// @name         Page click instructor
 // @namespace    http://tampermonkey.net/
-// @version      1.6
+// @version      1.0
 // @description  try to take over the world!
 // @author       You
 // @match        *://*.vk.com/*
