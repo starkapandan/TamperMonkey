@@ -73,7 +73,7 @@ var LinkSearchPattern = [
     },
     {
         host: /vk\.com/i,
-        RetryCount: 7,
+        RetryCount: -1, //infinite
         actionQueue: [
             {
                 elementFilterQueue: [
@@ -116,7 +116,7 @@ var app_tm = {
     activeHostPackage: undefined,
     currentSearchArray: undefined,
     on_actionNotFound_waitTime: 1000, //milli seconds
-    
+
     //browser variables
     actionHistory: [],
 
@@ -195,7 +195,7 @@ function GetElementListByType(findString, elementType, currentSearchArray) {
 
 async function PerformElementFilter(elementFilterPackage, currentSearchArray) {
     filteredSearchArray = currentSearchArray;
-    app_tm.debug("Element Filter to be applied",elementFilterPackage, " On current searchArray", currentSearchArray);
+    app_tm.debug("Element Filter to be applied", elementFilterPackage, " On current searchArray", currentSearchArray);
 
     if (elementFilterPackage.delayMS != undefined) {
         app_tm.debug("sleeping for " + elementFilterPackage.delayMS + "MS before running elementFilterPackage:", elementFilterPackage);
@@ -221,11 +221,11 @@ async function ProcessElementFilterQueue(elementFilterPackageList) {
     var currentSearchArray = [document];
     for (const elementFilter of elementFilterPackageList) {
         var filteredSearchArray = await PerformElementFilter(elementFilter, currentSearchArray);
-        if(elementFilter.tryFinal){ // empty array backtracks to non filtered search array, on full array finish filter early
+        if (elementFilter.tryFinal) { // empty array backtracks to non filtered search array, on full array finish filter early
             if (filteredSearchArray.length == 0) {
                 app_tm.debug("tryFinal did not find final element, backtracking to non filtered seach array");
                 continue;
-            }else{
+            } else {
                 currentSearchArray = filteredSearchArray
                 app_tm.debug("tryFinal found target element, exiting elementFilter queue early");
                 break;
@@ -253,8 +253,8 @@ async function PerformAction(actionPackage) {
     if (actionPackage.action != undefined) { //action exists
         switch (actionPackage.action) {
             case ElementActionEnum.click:
-                app_tm.debug("Clicked on ", result);
-                app_tm.actionHistory.push({element: result, action: "Click"});
+                app_tm.log("Clicked on ", result);
+                app_tm.actionHistory.push({ element: result, action: "Click" });
                 result.click();
                 break;
             default:
@@ -293,13 +293,15 @@ async function init() {
             break;
         }
         retryCount++;
-        if (app_tm.activeHostPackage.RetryCount == undefined || retryCount > app_tm.activeHostPackage.RetryCount) {
+        if(app_tm.activeHostPackage.RetryCount == undefined){
             app_tm.debug("Retrycount is max... exiting");
             break;
-        } else {
-            app_tm.log("One of the actions did not find target, retrying action queue... retry count " + retryCount);
-            await app_tm.sleep(app_tm.on_actionNotFound_waitTime);
+        }else if(app_tm.activeHostPackage.RetryCount  != -1 && retryCount > app_tm.activeHostPackage.RetryCount){ //if not -1 which is unlimited then check if exit needed
+            app_tm.debug("Retrycount is max... exiting");
+            break;
         }
+        app_tm.log("One of the actions did not find target, retrying action queue... retry count " + retryCount);
+        await app_tm.sleep(app_tm.on_actionNotFound_waitTime);
     }
 }
 
