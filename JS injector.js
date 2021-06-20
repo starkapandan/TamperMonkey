@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JS injector
 // @namespace    http://tampermonkey.net/
-// @version      1.3
+// @version      1.4
 // @description  try to take over the world!
 // @author       You
 // @run-at       document-start
@@ -78,7 +78,7 @@ var LinkSearchPattern = [
 ];
 
 var app_tm = {
-	currentHostScripts = undefined,
+	currentHostScripts: undefined,
 	DEBUG_MODE: false,
 	id_lookup: { nextIndex: 1 },
 	getID: function (hash) {
