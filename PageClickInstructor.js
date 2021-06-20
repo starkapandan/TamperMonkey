@@ -114,14 +114,19 @@ var LinkSearchPattern = [
 var app_tm = {
     activeHostPackage: undefined,
     currentSearchArray: undefined,
-    on_actionNotFound_waitTime= 1000, //milli seconds
+    on_actionNotFound_waitTime: 1000, //milli seconds
     DEBUG_MODE: false,
     log: function (...params) {
         console.log("TM>", ...params);
     },
     debug: function (...params) {
         if (this.DEBUG_MODE) {
-            this.write(...params)
+            this.log(...params)
+        }
+    },
+    debug_warn: function (...params) {
+        if (this.DEBUG_MODE) {
+            console.warn("TM>", ...params)
         }
     },
     sleep: async function (ms) {
@@ -139,16 +144,16 @@ function GetElementListByType(findString, elementType, currentSearchArray) {
             }
             break;
         case ElementTypeEnum.class:
-            for (searchLocation in currentSearchArray) {
-                var foundObjects = currentSearchLocation.getElementsByClassName(findString);
+            for (const searchLocation of currentSearchArray) {
+                var foundObjects = searchLocation.getElementsByClassName(findString);
                 for (var i = 0; i < foundObjects.length; i++) {
                     matchingObjects.push(foundObjects[i]);
                 }
             }
             break;
         case ElementTypeEnum.innerText:
-            findStringIsRegex = findString instanceof RegExp;
-            for (searchLocation in currentSearchArray) {
+            var findStringIsRegex = findString instanceof RegExp;
+            for (const searchLocation of currentSearchArray) {
                 if (findStringIsRegex) { //is regex /regexcode/i
                     if (searchLocation.textContent.match(findString)) {
                         matchingObjects.push(searchLocation);
@@ -161,13 +166,13 @@ function GetElementListByType(findString, elementType, currentSearchArray) {
             }
             break;
         case ElementTypeEnum.tag:
-            var foundObjects = currentSearchLocation.get(findString);
+            var foundObjects = currentSearchArray.get(findString);
             for (var i = 0; i < foundObjects.length; i++) {
                 matchingObjects.push(foundObjects[i]);
             }
             break;
         case ElementTypeEnum.querySelectorAll:
-            var foundObjects = currentSearchLocation.querySelectorAll(findString);
+            var foundObjects = currentSearchArray.querySelectorAll(findString);
             for (var i = 0; i < foundObjects.length; i++) {
                 matchingObjects.push(foundObjects[i]);
             }
@@ -192,7 +197,7 @@ async function PerformElementFilter(elementFilterPackage, currentSearchArray) {
         app_tm.debug("after filter function = ", filteredSearchArray);
     }
     if (elementFilterPackage.find || elementFilterPackage.type) {
-        if (elementFilterPackage.find && elementFilterPackageList.type) {
+        if (elementFilterPackage.find && elementFilterPackage.type) {
             filteredSearchArray = GetElementListByType(elementFilterPackage.find, elementFilterPackage.type, filteredSearchArray);
 
             app_tm.debug("after find element by string = ", filteredSearchArray);
@@ -206,13 +211,15 @@ async function PerformElementFilter(elementFilterPackage, currentSearchArray) {
 
 async function ProcessElementFilterQueue(elementFilterPackageList) {
     var currentSearchArray = [document];
-    for (elementFilter in elementFilterPackageList) {
+    for (const elementFilter of elementFilterPackageList) {
         currentSearchArray = await PerformElementFilter(elementFilter, currentSearchArray);
+        if (currentSearchArray.length == 0) {
+            app_tm.debug_warn("search array is empty, not procceding with rest of elementFilters")
+            return undefined;
+        }
     }
-    if (currentSearchArray.length == 0) {
-        return undefined;
-    } else if (currentSearchArray.length > 1) {
-        app_tm.debug("filtered search result is more than one element, action will be performed on first index -> ", currentSearchArray)
+    if (currentSearchArray.length > 1) {
+        app_tm.debug_warn("filtered search result is more than one element, action will be performed on first index -> ", currentSearchArray)
     }
     return currentSearchArray[0];
 }
@@ -242,13 +249,13 @@ async function PerformAction(actionPackage) {
 
 async function ProcessActionQueue(actionPackageList) {
     var actionsDidNotFindTarget = false;
-    for (actionPackage in actionPackageList) {
+    for (const actionPackage of actionPackageList) {
         var foundTarget = await PerformAction(actionPackage);
         if (!foundTarget) {
             actionsDidNotFindTarget = true;
         }
     }
-    if(actionsDidNotFindTarget){
+    if (actionsDidNotFindTarget) {
         return false; //fail, send for retry if requested
     }
     return true;
@@ -258,15 +265,17 @@ async function ProcessActionQueue(actionPackageList) {
 }
 async function init() {
     var retryCount = 0;
-    while(true){
-        var success = ProcessActionQueue(app_tm.activeHostPackage.actionQueue);
-        if(success){
+    while (true) {
+        var success = await ProcessActionQueue(app_tm.activeHostPackage.actionQueue);
+        if (success) {
+            app_tm.debug("All actions found target successfully");
             break;
         }
         retryCount++;
-        if(app_tm.activeHostPackage.RetryCount == undefined || retryCount > app_tm.activeHostPackage.RetryCount){
+        if (app_tm.activeHostPackage.RetryCount == undefined || retryCount > app_tm.activeHostPackage.RetryCount) {
+            app_tm.debug("Retrycount is max... exiting");
             break;
-        }else{
+        } else {
             app_tm.log("One of the actions did not find target, retrying action queue... retry count " + retryCount);
             await app_tm.sleep(app_tm.on_actionNotFound_waitTime);
         }
@@ -282,7 +291,7 @@ function checkIfHostInPatterns() {
             return true;
         }
     }
-    log.write(undefined, "No matched host pattern...");
+    app_tm.log(undefined, "No matched host pattern...");
     return false;
 
 }
@@ -295,7 +304,7 @@ function checkIfHostInPatterns() {
     if (checkIfHostInPatterns() == false) {
         return;
     }
-    log.write(undefined, "PageClickInstructor -> INJECT DONE\n" +
+    app_tm.log(undefined, "PageClickInstructor -> INJECT DONE\n" +
         "Functions: \n" +
         "Variables: \n");
     init();
