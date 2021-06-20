@@ -324,7 +324,7 @@ function AddGlobalFunctions(){
     }
     app_tm.log(undefined, "PageClickInstructor -> INJECT DONE\n" +
         "Functions: [RunAgain()]\n" +
-        "Variables: [app_tm.actionHistory\n");
+        "Variables: [app_tm.actionHistory]\n");
     AddGlobalFunctions();
     init();
 })();
