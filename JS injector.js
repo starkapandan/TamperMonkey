@@ -77,12 +77,8 @@ var LinkSearchPattern = [
 	},
 ];
 
-
-
-var currentHostScripts = undefined;
-var allObservedScripts = {};
-
-var log = {
+var app_tm = {
+	currentHostScripts = undefined,
 	DEBUG_MODE: false,
 	id_lookup: { nextIndex: 1 },
 	getID: function (hash) {
@@ -94,7 +90,7 @@ var log = {
 		return this.id_lookup[hash];
 
 	},
-	write: function (id, ...params) {
+	log: function (id, ...params) {
 		if (id == undefined) {
 			console.log("TM>", ...params);
 		} else {
@@ -109,7 +105,10 @@ var log = {
 				console.log("TM#" + this.getID(id) + ">", ...params);
 			}
 		}
-	}
+	},
+	sleep: async function (ms) {
+        await new Promise(r => setTimeout(r, ms));
+    }
 }
 
 
@@ -123,18 +122,18 @@ function ProcessReplacementList(scriptData, replacementsList, newNodeHashID) {
 	var modifiedScript = scriptData;
 
 	for (const replacementPackage of replacementsList) {
-		log.debug(newNodeHashID, "Using replacementPackage -> ", replacementPackage)
+		app_tm.debug(newNodeHashID, "Using replacementPackage -> ", replacementPackage)
 		var matchedData = modifiedScript.match(replacementPackage.find);
 		if (matchedData == undefined) {
-			log.debug(newNodeHashID, "No matches to apply from replacementpackage");
+			app_tm.debug(newNodeHashID, "No matches to apply from replacementpackage");
 			continue;
 		}
-		log.write(newNodeHashID, "Found matches to replace...", matchedData);
+		app_tm.log(newNodeHashID, "Found matches to replace...", matchedData);
 		modifiedScript = modifiedScript.replace(replacementPackage.find, replacementPackage.replaceWith);
 
 	};
 	eval(modifiedScript);
-	log.debug(newNodeHashID, "Modified script code -> ", modifiedScript);
+	app_tm.debug(newNodeHashID, "Modified script code -> ", modifiedScript);
 }
 
 function init() {
@@ -149,56 +148,56 @@ function init() {
 		for (var i = 0; i < tamperTarget.length; i++) {
 			//check if already scanned
 			if (tamperTarget[i].tm_scanned != undefined) {
-				log.debug("Already scanned skipping...");
+				app_tm.debug("Already scanned skipping...");
 				continue;
 			}
 			var newNodeHashID = window.performance.now().toString();
 			tamperTarget[i].tm_scanned = newNodeHashID;
-			log.debug(newNodeHashID, "New script element appeared -> ", tamperTarget[i].src, "hostscripts packages to be used -> ", currentHostScripts);
+			app_tm.debug(newNodeHashID, "New script element appeared -> ", tamperTarget[i].src, "hostscripts packages to be used -> ", app_tm.currentHostScripts);
 			//check if script is external src
-			for (const scriptPackage of currentHostScripts) {
+			for (const scriptPackage of app_tm.currentHostScripts) {
 				if (tamperTarget[i].src) { //src script
-					log.debug(newNodeHashID, "checking extern source pattern...");
+					app_tm.debug(newNodeHashID, "checking extern source pattern...");
 					let currentTamperTarget = tamperTarget[i];
 					if (scriptPackage.srcNamePattern == undefined) {
-						log.debug(newNodeHashID, "no srcNamePattern regex, skipping...");
+						app_tm.debug(newNodeHashID, "no srcNamePattern regex, skipping...");
 						continue
 					}
 
 					if (currentTamperTarget.src.match(scriptPackage.srcNamePattern)) {
 						//found current script
-						log.debug(newNodeHashID, "target script element found -> ", currentTamperTarget);
+						app_tm.debug(newNodeHashID, "target script element found -> ", currentTamperTarget);
 						var currentScriptSrc = currentTamperTarget.src;
 						currentTamperTarget.removeAttribute("src");
 
 						GetHTMLFromUrl(currentScriptSrc).then(scriptData => {
-							log.debug(newNodeHashID, "External script fetched...", scriptData);
+							app_tm.debug(newNodeHashID, "External script fetched...", scriptData);
 							ProcessReplacementList(scriptData, scriptPackage.replacements, newNodeHashID);
 						});
 					} else {
-						log.debug(newNodeHashID, "No source name pattern matches found for this script element")
+						app_tm.debug(newNodeHashID, "No source name pattern matches found for this script element")
 					}
 				} else { //inline script
-					log.debug(newNodeHashID, "checking inline pattern...");
+					app_tm.debug(newNodeHashID, "checking inline pattern...");
 					let currentTamperTarget = tamperTarget[i];
 					if (scriptPackage.inlinePattern == undefined) {
-						log.debug(newNodeHashID, "no inline regex pattern skipping...");
+						app_tm.debug(newNodeHashID, "no inline regex pattern skipping...");
 						continue;
 					}
 
 					if (currentTamperTarget.text || currentTamperTarget.text.match(scriptPackage.inlinePattern)) {
 						//found current script
-						log.debug(newNodeHashID, "target script element foun -> ", currentTamperTarget);
+						app_tm.debug(newNodeHashID, "target script element foun -> ", currentTamperTarget);
 						var scriptData = currentTamperTarget.text;
 						currentTamperTarget.text = "";
 
 						ProcessReplacementList(scriptData, scriptPackage.replacements, newNodeHashID);
 					} else {
-						log.debug(newNodeHashID, "No source name pattern matches found for this script element")
+						app_tm.debug(newNodeHashID, "No source name pattern matches found for this script element")
 					}
 				}
 			};
-			log.debug(newNodeHashID, "----End of SCRIPT DOM ELEMENT----\n\n\n");
+			app_tm.debug(newNodeHashID, "----End of SCRIPT DOM ELEMENT----\n\n\n");
 		}
 
 	}).observe(document.documentElement, { childList: true, subtree:true });
@@ -209,11 +208,11 @@ function checkIfHostInPatterns() {
 	for (var i = 0; i < LinkSearchPattern.length; i++) {
 		var hostPattern = LinkSearchPattern[i].host;
 		if (window.location.hostname.match(hostPattern) != undefined) {
-			currentHostScripts = LinkSearchPattern[i].scripts;
+			app_tm.currentHostScripts = LinkSearchPattern[i].scripts;
 			return true;
 		}
 	}
-	log.write(undefined, "No matched host pattern...");
+	app_tm.log(undefined, "No matched host pattern...");
 	return false;
 
 }
@@ -223,7 +222,8 @@ function checkIfHostInPatterns() {
 	if (checkIfHostInPatterns() == false) {
 		return;
 	}
-	log.write(undefined, "JS source modifier -> INJECT DONE\n" +
+	window.app_tm = app_tm;
+	app_tm.log(undefined, "JS source modifier -> INJECT DONE\n" +
 		"Functions: \n" +
 		"Variables: \n");
 	init();
