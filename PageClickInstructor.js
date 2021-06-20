@@ -294,10 +294,10 @@ async function init() {
         }
         retryCount++;
         if(app_tm.activeHostPackage.RetryCount == undefined){
-            app_tm.debug("Retrycount is max... exiting");
+            app_tm.log("Retrycount is max... exiting");
             break;
         }else if(app_tm.activeHostPackage.RetryCount  != -1 && retryCount > app_tm.activeHostPackage.RetryCount){ //if not -1 which is unlimited then check if exit needed
-            app_tm.debug("Retrycount is max... exiting");
+            app_tm.log("Retrycount is max... exiting");
             break;
         }
         app_tm.log("One of the actions did not find target, retrying action queue... retry count " + retryCount);
