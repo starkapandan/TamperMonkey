@@ -112,10 +112,19 @@ var LinkSearchPattern = [
 ];
 
 var app_tm = {
+    //app settings
     activeHostPackage: undefined,
     currentSearchArray: undefined,
     on_actionNotFound_waitTime: 1000, //milli seconds
+    
+    //browser variables
     actionHistory: [],
+
+    //browser functions
+    RunAgain: () => {
+        init();
+    },
+    //standard stuctury
     DEBUG_MODE: false,
     log: function (...params) {
         console.log("TM>", ...params);
@@ -307,12 +316,6 @@ function checkIfHostInPatterns() {
     return false;
 
 }
-function AddGlobalFunctions(){
-    window.RunAgain = () => {
-        init();
-    }
-    window.app_tm = app_tm;
-}
 
 (function () {
     "use strict";
@@ -322,9 +325,9 @@ function AddGlobalFunctions(){
     if (checkIfHostInPatterns() == false) {
         return;
     }
+    window.app_tm = app_tm;
     app_tm.log(undefined, "PageClickInstructor -> INJECT DONE\n" +
-        "Functions: [RunAgain()]\n" +
+        "Functions: [app_tm.RunAgain()]\n" +
         "Variables: [app_tm.actionHistory]\n");
-    AddGlobalFunctions();
     init();
 })();
