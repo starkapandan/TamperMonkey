@@ -115,6 +115,7 @@ var app_tm = {
     activeHostPackage: undefined,
     currentSearchArray: undefined,
     on_actionNotFound_waitTime: 1000, //milli seconds
+    actionHistory: [],
     DEBUG_MODE: false,
     log: function (...params) {
         console.log("TM>", ...params);
@@ -243,7 +244,8 @@ async function PerformAction(actionPackage) {
     if (actionPackage.action != undefined) { //action exists
         switch (actionPackage.action) {
             case ElementActionEnum.click:
-                app_tm.log("Clicked on ", result);
+                app_tm.debug("Clicked on ", result);
+                app_tm.actionHistory.push({element: result, action: "Click"});
                 result.click();
                 break;
             default:
@@ -273,11 +275,12 @@ async function ProcessActionQueue(actionPackageList) {
 
 }
 async function init() {
+    app_tm.actionHistory = [];
     var retryCount = 0;
     while (true) {
         var success = await ProcessActionQueue(app_tm.activeHostPackage.actionQueue);
         if (success) {
-            app_tm.debug("All actions found target successfully");
+            app_tm.log("All actions found target successfully");
             break;
         }
         retryCount++;
@@ -308,6 +311,7 @@ function AddGlobalFunctions(){
     window.RunAgain = () => {
         init();
     }
+    window.app_tm = app_tm;
 }
 
 (function () {
@@ -319,8 +323,8 @@ function AddGlobalFunctions(){
         return;
     }
     app_tm.log(undefined, "PageClickInstructor -> INJECT DONE\n" +
-        "Functions: RunAgain()\n" +
-        "Variables: \n");
+        "Functions: [RunAgain()]\n" +
+        "Variables: [app_tm.actionHistory\n");
     AddGlobalFunctions();
     init();
 })();
