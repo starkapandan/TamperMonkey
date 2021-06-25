@@ -1,12 +1,13 @@
 // ==UserScript==
 // @name         JS injector
 // @namespace    http://tampermonkey.net/
-// @version      1.4
+// @version      1.3
 // @description  try to take over the world!
 // @author       You
 // @run-at       document-start
 // @match        *://*.k2s.cc/*
 // @match        *://*.fboom.me/*
+// @match        *://*.brazzers.com/*
 // @grant        none
 // ==/UserScript==
 
@@ -75,6 +76,20 @@ var LinkSearchPattern = [
 			},
 		],
 	},
+    {
+		host: /(brazzers\.com)/is,
+		scripts: [
+			{
+				srcNamePattern: /\/static3\/main.*\.js/is, //main.e899123a1,js
+				replacements: [
+					{
+						find: /(,k=e\.showDownload;)/is,
+						replaceWith: `$1console.log("Gallery Download Link --->>>>", e.fileList[0].downloadUrl);`,
+					},
+				]
+			},
+		],
+	},
 ];
 
 var app_tm = {
@@ -118,8 +133,9 @@ async function GetHTMLFromUrl(url) {
 	return rawHTML;
 }
 
-function ProcessReplacementList(scriptData, replacementsList, newNodeHashID) {
-	var modifiedScript = scriptData;
+function ProcessReplacementList(scriptData, scriptPackage, newNodeHashID) {
+	var replacementsList = scriptPackage.replacements
+    var modifiedScript = scriptData;
 
 	for (const replacementPackage of replacementsList) {
 		app_tm.debug(newNodeHashID, "Using replacementPackage -> ", replacementPackage)
@@ -128,8 +144,8 @@ function ProcessReplacementList(scriptData, replacementsList, newNodeHashID) {
 			app_tm.debug(newNodeHashID, "No matches to apply from replacementpackage");
 			continue;
 		}
-		app_tm.log(newNodeHashID, "Found matches to replace...", matchedData);
 		modifiedScript = modifiedScript.replace(replacementPackage.find, replacementPackage.replaceWith);
+		app_tm.log(newNodeHashID, "Found matches to replace...", {"srcName":scriptPackage.srcNamePattern, "matchedData": matchedData, "finalCode": modifiedScript});
 
 	};
 	eval(modifiedScript);
@@ -172,7 +188,7 @@ function init() {
 
 						GetHTMLFromUrl(currentScriptSrc).then(scriptData => {
 							app_tm.debug(newNodeHashID, "External script fetched...", scriptData);
-							ProcessReplacementList(scriptData, scriptPackage.replacements, newNodeHashID);
+							ProcessReplacementList(scriptData, scriptPackage, newNodeHashID);
 						});
 					} else {
 						app_tm.debug(newNodeHashID, "No source name pattern matches found for this script element")
@@ -187,11 +203,11 @@ function init() {
 
 					if (currentTamperTarget.text || currentTamperTarget.text.match(scriptPackage.inlinePattern)) {
 						//found current script
-						app_tm.debug(newNodeHashID, "target script element foun -> ", currentTamperTarget);
+						app_tm.debug(newNodeHashID, "target script element found -> ", currentTamperTarget);
 						var scriptData = currentTamperTarget.text;
 						currentTamperTarget.text = "";
 
-						ProcessReplacementList(scriptData, scriptPackage.replacements, newNodeHashID);
+						ProcessReplacementList(scriptData, scriptPackage, newNodeHashID);
 					} else {
 						app_tm.debug(newNodeHashID, "No source name pattern matches found for this script element")
 					}

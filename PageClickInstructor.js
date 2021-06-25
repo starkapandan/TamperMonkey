@@ -125,7 +125,7 @@ var app_tm = {
         init();
     },
     //standard stuctury
-    DEBUG_MODE: true,
+    DEBUG_MODE: false,
     log: function (...params) {
         console.log("TM>", ...params);
     },
