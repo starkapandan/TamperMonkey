@@ -19,7 +19,7 @@ var LinkSearchPattern = [
 			{
 				srcNamePattern: /files\/js\/example.js/is, //check if this script from a source is called
 				replacements: [
-					{
+					{ 
 						find: /hello world/is,  //find regex match in external script
 						replaceWith: "alert('hello world')", //replace with string capture groups can be refered with $index starting from 1
 					},
