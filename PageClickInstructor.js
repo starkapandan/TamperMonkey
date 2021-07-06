@@ -296,7 +296,6 @@ async function init() {
             app_tm.log("All actions found target successfully");
             break;
         }
-        retryCount++;
         if(app_tm.activeHostPackage.RetryCount == undefined){
             app_tm.log("Retrycount is max... exiting");
             break;
@@ -304,7 +303,13 @@ async function init() {
             app_tm.log("Retrycount is max... exiting");
             break;
         }
-        app_tm.log("One of the actions did not find target, retrying action queue... retry count " + retryCount);
+        var retryMsg = "One of the actions did not find target, retrying action queue... retry count " + retryCount;
+        if(retryCount == 0){
+            app_tm.log(retryMsg + "... future retries will not be displayed in console without debug mode...");
+        }else{
+            app_tm.debug(retryMsg);
+        }
+        retryCount++;
         await app_tm.sleep(app_tm.on_actionNotFound_waitTime);
     }
 }

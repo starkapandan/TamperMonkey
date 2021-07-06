@@ -1,13 +1,11 @@
 // ==UserScript==
 // @name         JS injector
 // @namespace    http://tampermonkey.net/
-// @version      1.3
+// @version      1.4
 // @description  try to take over the world!
 // @author       You
 // @run-at       document-start
-// @match        *://*.k2s.cc/*
-// @match        *://*.fboom.me/*
-// @match        *://*.brazzers.com/*
+// @match        *://*/*
 // @grant        none
 // ==/UserScript==
 
@@ -76,7 +74,7 @@ var LinkSearchPattern = [
 			},
 		],
 	},
-    {
+	{
 		host: /(brazzers\.com)/is,
 		scripts: [
 			{
@@ -87,6 +85,23 @@ var LinkSearchPattern = [
 						replaceWith: `$1console.log("Gallery Download Link --->>>>", e.fileList[0].downloadUrl);`,
 					},
 				]
+			},
+		],
+	},
+	{
+		host: /(atkgirlfriends\.com)/is,
+		scripts: [
+			{
+				run: function () {
+					window.onload = () => {
+						var a = document.getElementsByTagName("video");
+						for (var i = 0; i < a.length; i++) {
+							if (a[i].src.match(/content\.atkingdom-network\.com.*/i)) {
+								a[i].src = a[i].src.replace(/(\/.*?)_tr\.mp4/, "$1_hd.mp4");
+							}
+						}
+					}
+				},
 			},
 		],
 	},
@@ -122,8 +137,8 @@ var app_tm = {
 		}
 	},
 	sleep: async function (ms) {
-        await new Promise(r => setTimeout(r, ms));
-    }
+		await new Promise(r => setTimeout(r, ms));
+	}
 }
 
 
@@ -135,7 +150,7 @@ async function GetHTMLFromUrl(url) {
 
 function ProcessReplacementList(scriptData, scriptPackage, newNodeHashID) {
 	var replacementsList = scriptPackage.replacements
-    var modifiedScript = scriptData;
+	var modifiedScript = scriptData;
 
 	for (const replacementPackage of replacementsList) {
 		app_tm.debug(newNodeHashID, "Using replacementPackage -> ", replacementPackage)
@@ -145,14 +160,23 @@ function ProcessReplacementList(scriptData, scriptPackage, newNodeHashID) {
 			continue;
 		}
 		modifiedScript = modifiedScript.replace(replacementPackage.find, replacementPackage.replaceWith);
-		app_tm.log(newNodeHashID, "Found matches to replace...", {"srcName":scriptPackage.srcNamePattern, "matchedData": matchedData, "finalCode": modifiedScript});
+		app_tm.log(newNodeHashID, "Found matches to replace...", { "srcName": scriptPackage.srcNamePattern, "matchedData": matchedData, "finalCode": modifiedScript });
 
 	};
 	eval(modifiedScript);
 	app_tm.debug(newNodeHashID, "Modified script code -> ", modifiedScript);
 }
 
+function checkDirectInjections() {
+	for (const scriptPackage of app_tm.currentHostScripts) {
+		if (scriptPackage.run != undefined) {
+			scriptPackage.run();
+		}
+	}
+}
+
 function init() {
+	checkDirectInjections();
 	new MutationObserver((mutations, observer) => {
 		// Find whether the script tag you want to tamper with exists
 		// If you can't predictably identify its location,
@@ -216,7 +240,7 @@ function init() {
 			app_tm.debug(newNodeHashID, "----End of SCRIPT DOM ELEMENT----\n\n\n");
 		}
 
-	}).observe(document.documentElement, { childList: true, subtree:true });
+	}).observe(document.documentElement, { childList: true, subtree: true });
 }
 
 function checkIfHostInPatterns() {

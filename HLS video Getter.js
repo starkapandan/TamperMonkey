@@ -8,6 +8,7 @@
 // @match        *://*.vk.com/*
 // @match        *://*.discoveryplus.se/*
 // @match        *://*.pornhub.com/*
+// @match        *://*.brazzers.com/*
 // @grant        none
 // ==/UserScript==
 
@@ -41,6 +42,13 @@ var LinkSearchPattern = [
         request: [
             { pattern: /index-f1.*\.m3u8/i, title: "F1 best quality" },
             { pattern: /index-f[2-9].*\.m3u8/i, title: "NOT best quality" },
+        ],
+    },
+    {
+        host: /brazzers\.com/i,
+        request: [
+            { pattern: /index-f4.*\.m3u8/i, title: "F4 best quality" },
+            { pattern: /index-f[12356].*\.m3u8/i, title: "NOT best quality" },
         ],
     },
 ];
