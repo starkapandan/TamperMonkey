@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name         Page click instructor
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.2
 // @description  try to take over the world!
 // @author       You
-// @match        *://*.vk.com/*
+// @match        *://*/*
 // @grant        none
 // @run-at       document-end
 // ==/UserScript==

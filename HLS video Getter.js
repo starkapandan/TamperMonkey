@@ -4,11 +4,7 @@
 // @version      1.6
 // @description  try to take over the world!
 // @author       You
-// @match        *://*.kanald.com.tr/*
-// @match        *://*.vk.com/*
-// @match        *://*.discoveryplus.se/*
-// @match        *://*.pornhub.com/*
-// @match        *://*.brazzers.com/*
+// @match        *://*/*
 // @grant        none
 // ==/UserScript==
 
