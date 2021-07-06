@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JS injector
 // @namespace    http://tampermonkey.net/
-// @version      1.4
+// @version      1.5
 // @description  try to take over the world!
 // @author       You
 // @run-at       document-start
@@ -19,7 +19,7 @@ var LinkSearchPattern = [
 			{
 				srcNamePattern: /files\/js\/example.js/is, //check if this script from a source is called
 				replacements: [
-					{ 
+					{
 						find: /hello world/is,  //find regex match in external script
 						replaceWith: "alert('hello world')", //replace with string capture groups can be refered with $index starting from 1
 					},
@@ -89,16 +89,25 @@ var LinkSearchPattern = [
 		],
 	},
 	{
-		host: /(atkgirlfriends\.com)/is,
+		host: /(atk(girlfriends|hairy|exotics|archives|petites|premium)\.com)/is,
 		scripts: [
 			{
 				run: function () {
 					window.onload = () => {
 						var a = document.getElementsByTagName("video");
 						for (var i = 0; i < a.length; i++) {
-							if (a[i].src.match(/content\.atkingdom-network\.com.*/i)) {
+							if (a[i].src != undefined && a[i].src.match(/(content|cdn.*?)\.atkingdom-network\.com.*/i)) {
 								a[i].src = a[i].src.replace(/(\/.*?)_tr\.mp4/, "$1_hd.mp4");
+							} else if (a[i].poster != undefined && a[i].poster.match(/(content|cdn.*?)\.atkingdom-network\.com.*/i)) {
+								a[i].src = a[i].poster.replace(/(\/.*?)\.jpg/, "$1_hd.mp4");
+							}else{
+								continue;
 							}
+							var playerTrashLeftovers = a[i].parentElement.querySelector("div.fp-ui")
+							if(playerTrashLeftovers != null){
+								playerTrashLeftovers.parentElement.removeChild(playerTrashLeftovers);
+							}
+							a[i].controls = true;
 						}
 					}
 				},
