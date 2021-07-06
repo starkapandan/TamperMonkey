@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JS injector
 // @namespace    http://tampermonkey.net/
-// @version      1.5
+// @version      1.6
 // @description  try to take over the world!
 // @author       You
 // @run-at       document-start
@@ -97,9 +97,13 @@ var LinkSearchPattern = [
 						var a = document.getElementsByTagName("video");
 						for (var i = 0; i < a.length; i++) {
 							if (a[i].src != undefined && a[i].src.match(/(content|cdn.*?)\.atkingdom-network\.com.*/i)) {
-								a[i].src = a[i].src.replace(/(\/.*?)_tr\.mp4/, "$1_hd.mp4");
+								let tmp = a[i].src;
+                                a[i].src = tmp.replace(/(\/.*?)_tr\.mp4/, "$1_sd.mp4")
+                                app_tm.log(undefined, "HD VERSION: ", tmp.replace(/(\/.*?)_tr\.mp4/, "$1_hd.mp4"));
 							} else if (a[i].poster != undefined && a[i].poster.match(/(content|cdn.*?)\.atkingdom-network\.com.*/i)) {
-								a[i].src = a[i].poster.replace(/(\/.*?)\.jpg/, "$1_hd.mp4");
+                                let tmp = a[i].poster;
+                                a[i].src = tmp.replace(/(\/.*?)\.jpg/, "$1_sd.mp4")
+                                app_tm.log(undefined, "HD VERSION: ", tmp.replace(/(\/.*?)\.jpg/, "$1_hd.mp4"));
 							}else{
 								continue;
 							}
