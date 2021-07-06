@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         HLS video Getter
 // @namespace    http://tampermonkey.net/
-// @version      1.6
+// @version      1.7
 // @description  try to take over the world!
 // @author       You
 // @match        *://*/*
@@ -125,7 +125,6 @@ function CheckLinkForMatch(link) {
         }
     }
     if (activeHostPatterns == undefined) {
-        console.log("TM: No matched host pattern...");
         return;
     }
     console.log("HLS VIDEO GETTER -> INJECT DONE\n" +
