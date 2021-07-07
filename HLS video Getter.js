@@ -41,7 +41,7 @@ var LinkSearchPattern = [
         ],
     },
     {
-        host: /brazzers\.com/i,
+        host: /brazzers|bellesafilms\.com/i,
         request: [
             { pattern: /index-f4.*\.m3u8/i, title: "F4 best quality" },
             { pattern: /index-f[12356].*\.m3u8/i, title: "NOT best quality" },
@@ -125,6 +125,7 @@ function CheckLinkForMatch(link) {
         }
     }
     if (activeHostPatterns == undefined) {
+        console.log("TM: No matched host pattern...");
         return;
     }
     console.log("HLS VIDEO GETTER -> INJECT DONE\n" +
